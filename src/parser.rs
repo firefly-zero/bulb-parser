@@ -287,7 +287,7 @@ fn parse_image_as_bytes<'a>(lines: &mut Lines<'a>, first_row: usize) -> Result<[
     raw[0] = 0x21; // magic number
     raw[1] = 4; // BPP
     raw[2] = WIDTH; // width
-    raw[3] = WIDTH >> 8; // width
+    raw[3] = 0; // width
     raw[4] = 255; // transparency
     // color swaps
     for i in 0u8..8u8 {
@@ -305,7 +305,7 @@ fn parse_image_as_bytes<'a>(lines: &mut Lines<'a>, first_row: usize) -> Result<[
         }
         for (x, color) in line.split_ascii_whitespace().enumerate() {
             let color = parse_hex(color, row)?;
-            byte = byte << 4 | color;
+            byte = byte << 4 | (color - 1);
             if x % 2 == 1 {
                 let idx = HEADER_SIZE + y * 4 + x / 2;
                 raw[idx] = byte;
@@ -333,6 +333,9 @@ fn parse_hex(s: &str, row: usize) -> Result<u8, Err> {
     }
     if (b'A'..=b'F').contains(&ch) {
         return Ok(ch - b'A');
+    }
+    if ch == b'.' {
+        return Ok(1);
     }
     Err(Err::new(ErrKind::BadHex, row))
 }

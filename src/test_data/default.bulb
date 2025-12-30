@@ -34,7 +34,7 @@ START 1
 T C
 IMAGE cat
 WALL 1
-ACTION cat1
+ACTION cat
 
 T K
 IMAGE key

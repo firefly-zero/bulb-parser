@@ -41,3 +41,12 @@ fn test_room_without_rows() {
     let kind = res.unwrap_err().kind;
     assert_eq!(kind, ErrKind::SmallRoomY)
 }
+
+#[test]
+fn test_default() {
+    let raw = include_str!("test_data/default.bulb");
+    let sections = parse(raw).unwrap();
+    assert_eq!(sections.rooms.len(), 1);
+    assert_eq!(sections.tiles.len(), 5);
+    assert_eq!(sections.actions.len(), 2);
+}
