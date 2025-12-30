@@ -19,6 +19,9 @@ pub enum ErrKind {
     NoValue,
     UnknownProperty,
     DuplicateProperty,
+    BadHex,
+    NotEnoughArgs,
+    TooManyArgs,
 
     DuplicateRoom,
     DuplicateTile,
@@ -51,6 +54,9 @@ impl ErrKind {
             ErrKind::NoValue => "property has no value",
             ErrKind::UnknownProperty => "unknown property",
             ErrKind::DuplicateProperty => "duplicate property",
+            ErrKind::BadHex => "invalid hexadecimal digit",
+            ErrKind::NotEnoughArgs => "not enough arguments",
+            ErrKind::TooManyArgs => "too many arguments",
 
             ErrKind::DuplicateRoom => "duplicate room ID",
             ErrKind::DuplicateTile => "duplicate tile ID",

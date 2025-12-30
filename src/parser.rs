@@ -212,8 +212,20 @@ impl<'a> Parser<'a> {
                     Action::Pick(tile_id)
                 }
                 "END" => Action::End,
-                "EXIT" => todo!(),
-                "PLACE" => todo!(),
+                "EXIT" => {
+                    let (room_id, x, y) = split_3_args(rest, row)?;
+                    let room_id = self.rooms.reference(room_id, row);
+                    let x = parse_hex(x, row)?;
+                    let y = parse_hex(y, row)?;
+                    Action::Exit(room_id, x, y)
+                }
+                "PLACE" => {
+                    let (tile_id, x, y) = split_3_args(rest, row)?;
+                    let tile_id = self.tiles.reference(tile_id, row);
+                    let x = parse_hex(x, row)?;
+                    let y = parse_hex(y, row)?;
+                    Action::Place(tile_id, x, y)
+                }
                 "BRANCH" => todo!(),
                 "SET" => todo!(),
                 "ADD" => todo!(),
@@ -272,7 +284,7 @@ fn parse_image_as_bytes<'a>(lines: &mut Lines<'a>, first_row: usize) -> Result<[
             break;
         }
         for (x, color) in line.split_ascii_whitespace().enumerate() {
-            let color = parse_color(color);
+            let color = parse_hex(color, row)?;
             byte = byte << 4 | color;
             if x % 2 == 1 {
                 let idx = HEADER_SIZE + y * 4 + x / 2;
@@ -286,21 +298,38 @@ fn parse_image_as_bytes<'a>(lines: &mut Lines<'a>, first_row: usize) -> Result<[
     Ok(raw)
 }
 
-fn parse_color(s: &str) -> u8 {
+fn parse_hex(s: &str, row: usize) -> Result<u8, Err> {
     let Some(ch) = s.bytes().next() else {
-        return 0;
+        return Err(Err::new(ErrKind::BadHex, row));
     };
     if s.len() != 1 {
-        return 0;
+        return Err(Err::new(ErrKind::BadHex, row));
     }
     if ch.is_ascii_digit() {
-        return ch - b'0';
+        return Ok(ch - b'0');
     }
     if (b'a'..=b'f').contains(&ch) {
-        return ch - b'a';
+        return Ok(ch - b'a');
     }
     if (b'A'..=b'F').contains(&ch) {
-        return ch - b'A';
+        return Ok(ch - b'A');
     }
-    0
+    Err(Err::new(ErrKind::BadHex, row))
+}
+
+fn split_3_args(rest: &str, row: usize) -> Result<(&str, &str, &str), Err> {
+    let mut parts = rest.split_ascii_whitespace();
+    let Some(id) = parts.next() else {
+        return Err(Err::new(ErrKind::NotEnoughArgs, row));
+    };
+    let Some(x) = parts.next() else {
+        return Err(Err::new(ErrKind::NotEnoughArgs, row));
+    };
+    let Some(y) = parts.next() else {
+        return Err(Err::new(ErrKind::NotEnoughArgs, row));
+    };
+    if parts.next().is_some() {
+        return Err(Err::new(ErrKind::TooManyArgs, row));
+    }
+    Ok((id, x, y))
 }
