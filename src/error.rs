@@ -20,6 +20,7 @@ pub enum ErrKind {
     UnknownProperty,
     DuplicateProperty,
     BadHex,
+    BadCmp,
     NotEnoughArgs,
     TooManyArgs,
 
@@ -55,6 +56,7 @@ impl ErrKind {
             ErrKind::UnknownProperty => "unknown property",
             ErrKind::DuplicateProperty => "duplicate property",
             ErrKind::BadHex => "invalid hexadecimal digit",
+            ErrKind::BadCmp => "unknown comparison operator",
             ErrKind::NotEnoughArgs => "not enough arguments",
             ErrKind::TooManyArgs => "too many arguments",
 

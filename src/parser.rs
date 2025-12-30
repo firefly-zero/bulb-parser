@@ -226,7 +226,27 @@ impl<'a> Parser<'a> {
                     let y = parse_hex(y, row)?;
                     Action::Place(tile_id, x, y)
                 }
-                "BRANCH" => todo!(),
+                "BRANCH" => {
+                    let mut parts = rest.split_ascii_whitespace();
+                    let Some(lhs) = parts.next() else {
+                        return Err(Err::new(ErrKind::NotEnoughArgs, row));
+                    };
+                    let Some(cmp) = parts.next() else {
+                        return Err(Err::new(ErrKind::NotEnoughArgs, row));
+                    };
+                    let Some(rhs) = parts.next() else {
+                        return Err(Err::new(ErrKind::NotEnoughArgs, row));
+                    };
+                    let id = match parts.next() {
+                        Some(id) => Some(self.actions.reference(id, row)),
+                        None => None,
+                    };
+                    let lhs = self.vars.reference(lhs, row);
+                    let cmp = parse_cmp(cmp, row)?;
+                    let rhs = parse_val(rhs, row)?;
+                    let cond = Cond { lhs, cmp, rhs };
+                    Action::Branch(cond, id)
+                }
                 "SET" => todo!(),
                 "ADD" => todo!(),
                 "ENQUEUE" => {
@@ -317,6 +337,20 @@ fn parse_hex(s: &str, row: usize) -> Result<u8, Err> {
     Err(Err::new(ErrKind::BadHex, row))
 }
 
+fn split_2_args(rest: &str, row: usize) -> Result<(&str, &str), Err> {
+    let mut parts = rest.split_ascii_whitespace();
+    let Some(x) = parts.next() else {
+        return Err(Err::new(ErrKind::NotEnoughArgs, row));
+    };
+    let Some(y) = parts.next() else {
+        return Err(Err::new(ErrKind::NotEnoughArgs, row));
+    };
+    if parts.next().is_some() {
+        return Err(Err::new(ErrKind::TooManyArgs, row));
+    }
+    Ok((x, y))
+}
+
 fn split_3_args(rest: &str, row: usize) -> Result<(&str, &str, &str), Err> {
     let mut parts = rest.split_ascii_whitespace();
     let Some(id) = parts.next() else {
@@ -332,4 +366,24 @@ fn split_3_args(rest: &str, row: usize) -> Result<(&str, &str, &str), Err> {
         return Err(Err::new(ErrKind::TooManyArgs, row));
     }
     Ok((id, x, y))
+}
+
+fn parse_cmp(s: &str, row: usize) -> Result<Cmp, Err> {
+    let cmp = match s {
+        ">" => Cmp::Gt,
+        ">=" => Cmp::Gte,
+        "<" => Cmp::Lt,
+        "<=" => Cmp::Lte,
+        "==" | "=" => Cmp::Eq,
+        "!=" | "<>" => Cmp::Ne,
+        _ => return Err(Err::new(ErrKind::BadCmp, row)),
+    };
+    Ok(cmp)
+}
+
+fn parse_val(s: &str, row: usize) -> Result<i32, Err> {
+    let Ok(val) = s.parse() else {
+        return Err(Err::new(ErrKind::BadCmp, row));
+    };
+    Ok(val)
 }
