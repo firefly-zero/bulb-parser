@@ -23,10 +23,10 @@ pub fn parse(raw: &str) -> Result<Sections, Err> {
         }
         match kind {
             'R' => parser.parse_room(id, &mut lines, row)?,
-            'T' => parser.parse_tile(id, &mut lines)?,
-            'I' => parser.parse_image(id, &mut lines)?,
-            'P' => parser.parse_player(id, &mut lines)?,
-            'A' => parser.parse_actions(id, &mut lines)?,
+            'T' => parser.parse_tile(id, &mut lines, row)?,
+            'I' => parser.parse_image(id, &mut lines, row)?,
+            'P' => parser.parse_player(id, &mut lines, row)?,
+            'A' => parser.parse_actions(id, &mut lines, row)?,
             _ => return Err(Err::new(ErrKind::UnknownSection, row)),
         };
     }
@@ -93,31 +93,48 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn parse_tile(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
+    fn parse_tile(
+        &mut self,
+        id: &'a str,
+        lines: &mut Lines<'a>,
+        first_row: usize,
+    ) -> Result<(), Err> {
         if self.tiles.is_defined(id) {
-            let row = get_row(lines);
-            return Err(Err::new(ErrKind::DuplicateTile, row));
+            return Err(Err::new(ErrKind::DuplicateTile, first_row));
         }
         // ...
         Ok(())
     }
 
-    fn parse_image(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
+    fn parse_image(
+        &mut self,
+        id: &'a str,
+        lines: &mut Lines<'a>,
+        first_row: usize,
+    ) -> Result<(), Err> {
         if self.images.is_defined(id) {
-            let row = get_row(lines);
-            return Err(Err::new(ErrKind::DuplicateImage, row));
+            return Err(Err::new(ErrKind::DuplicateImage, first_row));
         }
         Ok(())
     }
 
-    fn parse_player(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
+    fn parse_player(
+        &mut self,
+        id: &'a str,
+        lines: &mut Lines<'a>,
+        first_row: usize,
+    ) -> Result<(), Err> {
         Ok(())
     }
 
-    fn parse_actions(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
+    fn parse_actions(
+        &mut self,
+        id: &'a str,
+        lines: &mut Lines<'a>,
+        first_row: usize,
+    ) -> Result<(), Err> {
         if self.actions.is_defined(id) {
-            let row = get_row(lines);
-            return Err(Err::new(ErrKind::DuplicateAction, row));
+            return Err(Err::new(ErrKind::DuplicateAction, first_row));
         }
         Ok(())
     }
@@ -134,12 +151,5 @@ impl<'a> Parser<'a> {
             player: self.player,
             n_vars: self.vars.len(),
         })
-    }
-}
-
-fn get_row(lines: &mut Lines<'_>) -> usize {
-    match lines.next() {
-        Some((i, _)) => i - 1,
-        None => 0,
     }
 }
