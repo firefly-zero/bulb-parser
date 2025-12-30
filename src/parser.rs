@@ -1,7 +1,7 @@
 use crate::entities::*;
 use crate::*;
+use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
-use alloc::vec;
 use alloc::vec::Vec;
 
 type Lines<'a> = core::iter::Enumerate<core::str::Lines<'a>>;
@@ -192,6 +192,40 @@ impl<'a> Parser<'a> {
         if self.actions.is_defined(id) {
             return Err(Err::new(ErrKind::DuplicateAction, first_row));
         }
+        let mut actions = Vec::new();
+        for (row, line) in lines {
+            let line = line.trim_ascii();
+            if line.is_empty() {
+                break;
+            }
+            let Some((name, rest)) = line.split_once(' ') else {
+                return Err(Err::new(ErrKind::NoValue, row));
+            };
+            let rest = rest.trim_ascii();
+            let action = match name {
+                "SAY" => {
+                    let msg = rest.to_owned();
+                    Action::Say(msg)
+                }
+                "PICK" => {
+                    let tile_id = self.tiles.reference(rest, row);
+                    Action::Pick(tile_id)
+                }
+                "END" => Action::End,
+                "EXIT" => todo!(),
+                "PLACE" => todo!(),
+                "BRANCH" => todo!(),
+                "SET" => todo!(),
+                "ADD" => todo!(),
+                "ENQUEUE" => {
+                    let action_id = self.actions.reference(rest, row);
+                    Action::Enqueue(action_id)
+                }
+                _ => todo!(),
+            };
+            actions.push(action);
+        }
+        self.actions.define(id, actions.into_boxed_slice());
         Ok(())
     }
 
