@@ -24,20 +24,31 @@ T .
 IMAGE .
 
 T W
-IMAGE W
+IMAGE wall
 WALL 1
 
 T P
-PLAYER 1
+IMAGE .
+START 1
 
 T C
-IMAGE C
+IMAGE cat
 WALL 1
 ACTION cat1
 
 T K
-IMAGE K
-ACTION key1
+IMAGE key
+ACTION key
+
+P default
+. . . F F . . .
+. . . F F . . .
+. . . F F . . .
+. . F F F F . .
+. F F F F F F .
+F . F F F F . F
+. . F . . F . .
+. . F . . F . .
 
 I .
 . . . . . . . .
@@ -49,7 +60,7 @@ I .
 . . . . . . . .
 . . . . . . . .
 
-I W
+I wall
 2 2 2 2 2 2 2 2
 2 . . . . . . 2
 2 . 2 2 2 2 . 2
@@ -59,17 +70,7 @@ I W
 2 . . . . . . 2
 2 2 2 2 2 2 2 2
 
-I P
-. . . F F . . .
-. . . F F . . .
-. . . F F . . .
-. . F F F F . .
-. F F F F F F .
-F . F F F F . F
-. . F . . F . .
-. . F . . F . .
-
-I C
+I cat
 . . . . . . . .
 . . . . . . . .
 . 2 . 2 . . . 2
@@ -79,7 +80,7 @@ I C
 . . 2 2 2 2 . .
 . . 2 . . 2 . .
 
-I K
+I key
 . . . . . . . .
 . . 2 2 2 2 . .
 . . 2 . . 2 . .
@@ -89,16 +90,10 @@ I K
 . . . 2 . . . .
 . . . 2 2 . . .
 
-A cat1
-DO SAY Cat: I'm a cat.
-NEXT cat2
+A cat
+SAY Cat: I'm a cat.
+SAY Yes, I can talk.
 
-A cat2
-DO SAY Yes, I can talk.
-
-A key1
-DO SAY You found a key!
-NEXT key2
-
-A key2
-DO PICK
+A key
+SAY You found a key!
+PICK
