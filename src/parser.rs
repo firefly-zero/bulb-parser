@@ -32,12 +32,21 @@ pub fn parse(raw: &str) -> Result<Sections, Err> {
 }
 
 struct Parser<'a> {
-    pub rooms: Vec<(&'a str, Room)>,
-    pub tiles: Vec<(&'a str, Tile)>,
-    pub images: Vec<(&'a str, Image)>,
-    pub actions: Vec<(&'a str, Box<[Action]>)>,
-    pub vars: Vec<(&'a str, ())>,
+    pub rooms: Vec<Entity<'a, Room>>,
+    pub tiles: Vec<Entity<'a, Tile>>,
+    pub images: Vec<Entity<'a, Image>>,
+    pub actions: Vec<Entity<'a, Box<[Action]>>>,
+    pub vars: Vec<Entity<'a, ()>>,
     pub player: Option<Image>,
+}
+
+struct Entity<'a, T> {
+    /// The human-readable entity ID as defined in the file.
+    id: &'a str,
+    /// Row number where the entity is first referenced.
+    first_ref: usize,
+    /// Entity value. If None, the entity was referenced but definition not found yet.
+    value: Option<T>,
 }
 
 impl<'a> Parser<'a> {
@@ -53,8 +62,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_room(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
-        for (oid, _) in &self.rooms {
-            if *oid == id {
+        for entity in &self.rooms {
+            if entity.value.is_some() && entity.id == id {
                 let row = get_row(lines);
                 return Err(Err::new(ErrKind::DuplicateRoom, row));
             }
@@ -64,8 +73,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_tile(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
-        for (oid, _) in &self.tiles {
-            if *oid == id {
+        for entity in &self.tiles {
+            if entity.value.is_some() && entity.id == id {
                 let row = get_row(lines);
                 return Err(Err::new(ErrKind::DuplicateTile, row));
             }
@@ -75,8 +84,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_image(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
-        for (oid, _) in &self.images {
-            if *oid == id {
+        for entity in &self.images {
+            if entity.value.is_some() && entity.id == id {
                 let row = get_row(lines);
                 return Err(Err::new(ErrKind::DuplicateImage, row));
             }
@@ -89,8 +98,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_actions(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
-        for (oid, _) in &self.actions {
-            if *oid == id {
+        for entity in &self.actions {
+            if entity.value.is_some() && entity.id == id {
                 let row = get_row(lines);
                 return Err(Err::new(ErrKind::DuplicateAction, row));
             }
@@ -103,19 +112,25 @@ impl<'a> Parser<'a> {
             return Err(Err::new(ErrKind::NoRooms, 0));
         }
         Ok(Sections {
-            rooms: drop_ids(self.rooms),
-            tiles: drop_ids(self.tiles),
-            images: drop_ids(self.images),
-            actions: drop_ids(self.actions),
+            rooms: drop_ids(self.rooms, ErrKind::UndefinedRoom)?,
+            tiles: drop_ids(self.tiles, ErrKind::UndefinedTile)?,
+            images: drop_ids(self.images, ErrKind::UndefinedImage)?,
+            actions: drop_ids(self.actions, ErrKind::UndefinedAction)?,
             player: self.player,
             n_vars: self.vars.len(),
         })
     }
 }
 
-fn drop_ids<T>(items: Vec<(&'_ str, T)>) -> Box<[T]> {
-    let items: Vec<T> = items.into_iter().map(|(_, v)| v).collect();
-    items.into_boxed_slice()
+fn drop_ids<T>(items: Vec<Entity<T>>, kind: ErrKind) -> Result<Box<[T]>, Err> {
+    let mut result: Vec<T> = Vec::new();
+    for entity in items {
+        let Some(val) = entity.value else {
+            return Err(Err::new(kind, entity.first_ref));
+        };
+        result.push(val);
+    }
+    Ok(result.into_boxed_slice())
 }
 
 fn get_row(lines: &mut Lines<'_>) -> usize {
