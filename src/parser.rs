@@ -247,13 +247,25 @@ impl<'a> Parser<'a> {
                     let cond = Cond { lhs, cmp, rhs };
                     Action::Branch(cond, id)
                 }
-                "SET" => todo!(),
-                "ADD" => todo!(),
+                "SET" => {
+                    let (var_id, val) = split_2_args(rest, row)?;
+                    let var_id = self.vars.reference(var_id, row);
+                    let val = parse_val(val, row)?;
+                    Action::Set(var_id, val)
+                }
+                "ADD" => {
+                    let (var_id, val) = split_2_args(rest, row)?;
+                    let var_id = self.vars.reference(var_id, row);
+                    let val = parse_val(val, row)?;
+                    Action::Add(var_id, val)
+                }
                 "ENQUEUE" => {
                     let action_id = self.actions.reference(rest, row);
                     Action::Enqueue(action_id)
                 }
-                _ => todo!(),
+                _ => {
+                    return Err(Err::new(ErrKind::UnknownProperty, row));
+                }
             };
             actions.push(action);
         }
@@ -265,14 +277,15 @@ impl<'a> Parser<'a> {
         if self.rooms.is_empty() {
             return Err(Err::new(ErrKind::NoRooms, 0));
         }
-        Ok(Sections {
+        let sections = Sections {
             rooms: self.rooms.finalize(ErrKind::UndefinedRoom)?,
             tiles: self.tiles.finalize(ErrKind::UndefinedTile)?,
             images: self.images.finalize(ErrKind::UndefinedImage)?,
             actions: self.actions.finalize(ErrKind::UndefinedAction)?,
             player: self.player,
             n_vars: self.vars.len(),
-        })
+        };
+        Ok(sections)
     }
 }
 

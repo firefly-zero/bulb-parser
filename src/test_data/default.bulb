@@ -21,14 +21,14 @@ W . . . . . . . . . . . . . . . . . . . . . . . . . . . . W
 W W W W W W W W W W W W W W W W W W W W W W W W W W W W W W
 
 T .
-IMAGE .
+IMAGE bg
 
 T W
 IMAGE wall
 WALL 1
 
 T P
-IMAGE .
+IMAGE bg
 START 1
 
 T C
@@ -50,7 +50,7 @@ F . F F F F . F
 . . F . . F . .
 . . F . . F . .
 
-I .
+I bg
 . . . . . . . .
 . . . . . . . .
 . . . . . . . .
