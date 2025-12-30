@@ -1,6 +1,7 @@
 #![no_std]
 extern crate alloc;
 
+mod entities;
 mod error;
 mod parser;
 mod types;
