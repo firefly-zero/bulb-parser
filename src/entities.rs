@@ -58,10 +58,6 @@ impl<'a, T> Entities<'a, T> {
         false
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Entity<T>> {
-        self.items.iter()
-    }
-
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }

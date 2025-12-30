@@ -10,7 +10,7 @@ impl Err {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ErrKind {
     UnknownSection,
     NoRooms,

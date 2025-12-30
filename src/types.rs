@@ -4,6 +4,7 @@ use alloc::string::String;
 type ID = usize;
 type Array<T> = Box<[T]>;
 
+#[derive(Debug)]
 pub struct Sections {
     pub rooms: Array<Room>,
     pub tiles: Array<Tile>,
@@ -13,10 +14,12 @@ pub struct Sections {
     pub n_vars: usize,
 }
 
+#[derive(Debug)]
 pub struct Room {
     pub tiles: [[ID; 30]; 20],
 }
 
+#[derive(Debug)]
 pub struct Tile {
     pub image: Option<ID>,
     pub wall: bool,
@@ -24,10 +27,12 @@ pub struct Tile {
     pub action: Option<ID>,
 }
 
+#[derive(Debug)]
 pub struct Image {
     pub raw: [u8; 64],
 }
 
+#[derive(Debug)]
 pub enum Action {
     /// Print a dialog line.
     Say(String),
@@ -54,6 +59,7 @@ pub enum Action {
     Enqueue(ID),
 }
 
+#[derive(Debug)]
 pub struct Cond {
     pub lhs: ID,
     pub cmp: Cmp,
@@ -61,6 +67,7 @@ pub struct Cond {
 }
 
 /// Comparison operator.
+#[derive(Debug)]
 pub enum Cmp {
     /// `<`: Less than.
     Lt,

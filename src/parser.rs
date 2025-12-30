@@ -10,12 +10,12 @@ pub fn parse(raw: &str) -> Result<Sections, Err> {
     let mut lines = raw.lines().enumerate();
     loop {
         let Some((row, line)) = lines.next() else {
-            break;
+            break; // End of file.
         };
         let line = line.trim_ascii();
         let mut chars = line.chars();
         let Some(kind) = chars.next() else {
-            continue;
+            continue; // Empty line.
         };
         let id = line[1..].trim_ascii();
         if id.is_empty() {
