@@ -1,6 +1,7 @@
 use crate::entities::*;
 use crate::*;
 use alloc::boxed::Box;
+use alloc::vec::Vec;
 
 type Lines<'a> = core::iter::Enumerate<core::str::Lines<'a>>;
 
@@ -58,7 +59,29 @@ impl<'a> Parser<'a> {
             let row = get_row(lines);
             return Err(Err::new(ErrKind::DuplicateRoom, row));
         }
-        // ...
+        let mut room: Vec<[usize; 30]> = Vec::new();
+        for (row, line) in lines.by_ref().take(20) {
+            let line = line.trim_ascii();
+            if line.is_empty() {
+                return Err(Err::new(ErrKind::SmallRoomY, row));
+            }
+            let mut tiles = Vec::new();
+            for tile_id in line.split_ascii_whitespace() {
+                let tile_id = self.tiles.reference(tile_id, row);
+                tiles.push(tile_id);
+            }
+            if tiles.len() < 30 {
+                return Err(Err::new(ErrKind::SmallRoomX, row));
+            }
+            let Ok(tiles) = tiles.try_into() else {
+                return Err(Err::new(ErrKind::BigRoomX, row));
+            };
+            room.push(tiles);
+        }
+        let room = Room {
+            tiles: room.try_into().unwrap(),
+        };
+        self.rooms.define(id, room);
         Ok(())
     }
 

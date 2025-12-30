@@ -34,6 +34,21 @@ impl<'a, T> Entities<'a, T> {
         self.items.len() - 1
     }
 
+    pub fn define(&mut self, id: &'a str, value: T) {
+        for entity in &mut self.items {
+            if entity.id == id {
+                entity.value = Some(value);
+                return;
+            }
+        }
+        let entity = Entity {
+            id,
+            first_ref: 0,
+            value: Some(value),
+        };
+        self.items.push(entity);
+    }
+
     pub fn is_defined(&self, id: &str) -> bool {
         for entity in &self.items {
             if entity.value.is_some() && entity.id == id {

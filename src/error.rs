@@ -25,6 +25,11 @@ pub enum ErrKind {
     UndefinedTile,
     UndefinedImage,
     UndefinedAction,
+
+    SmallRoomX,
+    SmallRoomY,
+    BigRoomX,
+    BigRoomY,
 }
 
 impl ErrKind {
@@ -43,6 +48,11 @@ impl ErrKind {
             ErrKind::UndefinedTile => "tile is referenced but not defined",
             ErrKind::UndefinedImage => "image is referenced but not defined",
             ErrKind::UndefinedAction => "action is referenced but not defined",
+
+            ErrKind::SmallRoomX => "room row has not enough columns",
+            ErrKind::SmallRoomY => "room has not enough rows",
+            ErrKind::BigRoomX => "room row has too many columns",
+            ErrKind::BigRoomY => "room row has too many rows",
         }
     }
 }
