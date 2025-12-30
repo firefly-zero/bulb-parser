@@ -173,7 +173,7 @@ impl<'a> Parser<'a> {
         lines: &mut Lines<'a>,
         first_row: usize,
     ) -> Result<(), Err> {
-        if id != "default" {
+        if id != "idle" {
             return Err(Err::new(ErrKind::BadPlayerID, first_row));
         }
         let raw = parse_image_as_bytes(lines, first_row)?;

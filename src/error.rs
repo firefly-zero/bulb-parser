@@ -47,7 +47,7 @@ impl ErrKind {
             ErrKind::UnknownSection => "unknown section type",
             ErrKind::NoRooms => "file has no rooms",
             ErrKind::NoID => "ID is missing",
-            ErrKind::BadPlayerID => "player ID must be \"default\"",
+            ErrKind::BadPlayerID => "player ID must be \"idle\"",
             ErrKind::NoValue => "property has no value",
             ErrKind::UnknownProperty => "unknown property",
             ErrKind::DuplicateProperty => "duplicate property",
