@@ -22,7 +22,7 @@ pub fn parse(raw: &str) -> Result<Sections, Err> {
             return Err(Err::new(ErrKind::NoID, row));
         }
         match kind {
-            'R' => parser.parse_room(id, &mut lines)?,
+            'R' => parser.parse_room(id, &mut lines, row)?,
             'T' => parser.parse_tile(id, &mut lines)?,
             'I' => parser.parse_image(id, &mut lines)?,
             'P' => parser.parse_player(id, &mut lines)?,
@@ -54,16 +54,20 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_room(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
+    fn parse_room(
+        &mut self,
+        id: &'a str,
+        lines: &mut Lines<'a>,
+        first_row: usize,
+    ) -> Result<(), Err> {
         if self.rooms.is_defined(id) {
-            let row = get_row(lines);
-            return Err(Err::new(ErrKind::DuplicateRoom, row));
+            return Err(Err::new(ErrKind::DuplicateRoom, first_row));
         }
         let mut room: Vec<[usize; 30]> = Vec::new();
-        for (row, line) in lines.by_ref().take(20) {
+        for (row, line) in lines.by_ref() {
             let line = line.trim_ascii();
             if line.is_empty() {
-                return Err(Err::new(ErrKind::SmallRoomY, row));
+                return Err(Err::new(ErrKind::SmallRoomY, first_row));
             }
             let mut tiles = Vec::new();
             for tile_id in line.split_ascii_whitespace() {
@@ -78,9 +82,13 @@ impl<'a> Parser<'a> {
             };
             room.push(tiles);
         }
-        let room = Room {
-            tiles: room.try_into().unwrap(),
+        if room.len() < 20 {
+            return Err(Err::new(ErrKind::SmallRoomY, first_row));
+        }
+        let Ok(room) = room.try_into() else {
+            return Err(Err::new(ErrKind::BigRoomY, first_row));
         };
+        let room = Room { tiles: room };
         self.rooms.define(id, room);
         Ok(())
     }
