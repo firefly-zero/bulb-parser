@@ -10,7 +10,7 @@ pub struct Sections {
     pub tiles: Array<Tile>,
     pub images: Array<Image>,
     pub actions: Array<Array<Action>>,
-    pub player: Option<Image>,
+    pub player: Option<ID>,
     pub n_vars: usize,
 }
 
@@ -23,13 +23,13 @@ pub struct Room {
 pub struct Tile {
     pub image: Option<ID>,
     pub wall: bool,
-    pub player: u8,
+    pub start: u8,
     pub action: Option<ID>,
 }
 
 #[derive(Debug)]
 pub struct Image {
-    pub raw: [u8; 64],
+    pub raw: [u8; 45],
 }
 
 #[derive(Debug)]

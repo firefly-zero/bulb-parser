@@ -34,11 +34,11 @@ impl<'a, T> Entities<'a, T> {
         self.items.len() - 1
     }
 
-    pub fn define(&mut self, id: &'a str, value: T) {
-        for entity in &mut self.items {
+    pub fn define(&mut self, id: &'a str, value: T) -> usize {
+        for (i, entity) in self.items.iter_mut().enumerate() {
             if entity.id == id {
                 entity.value = Some(value);
-                return;
+                return i;
             }
         }
         let entity = Entity {
@@ -47,6 +47,7 @@ impl<'a, T> Entities<'a, T> {
             value: Some(value),
         };
         self.items.push(entity);
+        self.items.len() - 1
     }
 
     pub fn is_defined(&self, id: &str) -> bool {

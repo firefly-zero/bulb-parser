@@ -1,6 +1,7 @@
 use crate::entities::*;
 use crate::*;
 use alloc::boxed::Box;
+use alloc::vec;
 use alloc::vec::Vec;
 
 type Lines<'a> = core::iter::Enumerate<core::str::Lines<'a>>;
@@ -39,7 +40,7 @@ struct Parser<'a> {
     pub images: Entities<'a, Image>,
     pub actions: Entities<'a, Box<[Action]>>,
     pub vars: Entities<'a, ()>,
-    pub player: Option<Image>,
+    pub player: Option<usize>,
 }
 
 impl<'a> Parser<'a> {
@@ -63,13 +64,13 @@ impl<'a> Parser<'a> {
         if self.rooms.is_defined(id) {
             return Err(Err::new(ErrKind::DuplicateRoom, first_row));
         }
-        let mut room: Vec<[usize; 30]> = Vec::new();
+        let mut room: Vec<[usize; 30]> = Vec::with_capacity(20);
         for (row, line) in lines {
             let line = line.trim_ascii();
             if line.is_empty() {
                 break;
             }
-            let mut tiles = Vec::new();
+            let mut tiles = Vec::with_capacity(30);
             for tile_id in line.split_ascii_whitespace() {
                 let tile_id = self.tiles.reference(tile_id, row);
                 tiles.push(tile_id);
@@ -126,11 +127,11 @@ impl<'a> Parser<'a> {
                     }
                     tile.wall = rest == "1"
                 }
-                "PLAYER" => {
-                    if tile.player != 0 {
+                "START" => {
+                    if tile.start != 0 {
                         return Err(Err::new(ErrKind::DuplicateProperty, row));
                     }
-                    tile.player = match rest {
+                    tile.start = match rest {
                         "1" => 1,
                         "2" => 2,
                         "3" => 3,
@@ -160,6 +161,9 @@ impl<'a> Parser<'a> {
         if self.images.is_defined(id) {
             return Err(Err::new(ErrKind::DuplicateImage, first_row));
         }
+        let raw = parse_image_as_bytes(lines, first_row)?;
+        let image = Image { raw };
+        self.images.define(id, image);
         Ok(())
     }
 
@@ -169,6 +173,13 @@ impl<'a> Parser<'a> {
         lines: &mut Lines<'a>,
         first_row: usize,
     ) -> Result<(), Err> {
+        if id != "default" {
+            return Err(Err::new(ErrKind::BadPlayerID, first_row));
+        }
+        let raw = parse_image_as_bytes(lines, first_row)?;
+        let image = Image { raw };
+        let image_id = self.images.define(id, image);
+        self.player = Some(image_id);
         Ok(())
     }
 
@@ -197,4 +208,65 @@ impl<'a> Parser<'a> {
             n_vars: self.vars.len(),
         })
     }
+}
+
+fn parse_image_as_bytes<'a>(lines: &mut Lines<'a>, first_row: usize) -> Result<[u8; 45], Err> {
+    const WIDTH: u8 = 8;
+    const HEIGHT: u8 = 8;
+    const HEADER_SIZE: usize = 5 + 8;
+    const BODY_SIZE: u8 = WIDTH * HEIGHT / 2;
+    let mut raw = [0; HEADER_SIZE + BODY_SIZE as usize];
+
+    // Header.
+    raw[0] = 0x21; // magic number
+    raw[1] = 4; // BPP
+    raw[2] = WIDTH; // width
+    raw[3] = WIDTH >> 8; // width
+    raw[4] = 255; // transparency
+    // color swaps
+    for i in 0u8..8u8 {
+        raw[5 + i as usize] = ((i * 2) << 4) | (i * 2 + 1);
+    }
+
+    let mut byte: u8 = 0;
+    for (y, (row, line)) in lines.enumerate() {
+        if y > 8 {
+            return Err(Err::new(ErrKind::BigImageY, first_row));
+        }
+        let line = line.trim_ascii();
+        if line.is_empty() {
+            break;
+        }
+        for (x, color) in line.split_ascii_whitespace().enumerate() {
+            let color = parse_color(color);
+            byte = byte << 4 | color;
+            if x % 2 == 1 {
+                let idx = HEADER_SIZE + y * 4 + x / 2;
+                raw[idx] = byte;
+            }
+            if x == 9 {
+                return Err(Err::new(ErrKind::BigImageX, row));
+            }
+        }
+    }
+    Ok(raw)
+}
+
+fn parse_color(s: &str) -> u8 {
+    let Some(ch) = s.bytes().next() else {
+        return 0;
+    };
+    if s.len() != 1 {
+        return 0;
+    }
+    if ch.is_ascii_digit() {
+        return ch - b'0';
+    }
+    if (b'a'..=b'f').contains(&ch) {
+        return ch - b'a';
+    }
+    if (b'A'..=b'F').contains(&ch) {
+        return ch - b'A';
+    }
+    0
 }

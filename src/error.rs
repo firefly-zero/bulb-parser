@@ -15,6 +15,7 @@ pub enum ErrKind {
     UnknownSection,
     NoRooms,
     NoID,
+    BadPlayerID,
     NoValue,
     UnknownProperty,
     DuplicateProperty,
@@ -33,6 +34,11 @@ pub enum ErrKind {
     SmallRoomY,
     BigRoomX,
     BigRoomY,
+
+    SmallImageX,
+    SmallImageY,
+    BigImageX,
+    BigImageY,
 }
 
 impl ErrKind {
@@ -41,6 +47,7 @@ impl ErrKind {
             ErrKind::UnknownSection => "unknown section type",
             ErrKind::NoRooms => "file has no rooms",
             ErrKind::NoID => "ID is missing",
+            ErrKind::BadPlayerID => "player ID must be \"default\"",
             ErrKind::NoValue => "property has no value",
             ErrKind::UnknownProperty => "unknown property",
             ErrKind::DuplicateProperty => "duplicate property",
@@ -59,6 +66,11 @@ impl ErrKind {
             ErrKind::SmallRoomY => "room has not enough rows",
             ErrKind::BigRoomX => "room row has too many columns",
             ErrKind::BigRoomY => "room row has too many rows",
+
+            ErrKind::SmallImageX => "image row has not enough columns",
+            ErrKind::SmallImageY => "image has not enough rows",
+            ErrKind::BigImageX => "image row has too many columns",
+            ErrKind::BigImageY => "image row has too many rows",
         }
     }
 }
