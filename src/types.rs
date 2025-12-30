@@ -2,13 +2,14 @@ use alloc::boxed::Box;
 use alloc::string::String;
 
 type ID = usize;
+type Array<T> = Box<[T]>;
 
 pub struct Sections {
-    pub rooms: Box<Room>,
-    pub tiles: Box<Tile>,
-    pub images: Box<Image>,
-    pub actions: Box<Box<[Action]>>,
-    pub player: Image,
+    pub rooms: Array<Room>,
+    pub tiles: Array<Tile>,
+    pub images: Array<Image>,
+    pub actions: Array<Array<Action>>,
+    pub player: Option<Image>,
     pub n_vars: usize,
 }
 
@@ -34,7 +35,7 @@ pub enum Action {
     ///
     /// Adds +1 to the value of the given variable
     /// and removes the tile from the room.
-    Pick,
+    Pick(ID),
     /// End the game.
     End,
     /// Go to another room.
