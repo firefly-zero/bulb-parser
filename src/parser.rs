@@ -7,7 +7,7 @@ pub fn parse(raw: &str) -> Result<Sections, Err> {
     let mut parser = Parser::new();
     let mut lines = raw.lines().enumerate();
     loop {
-        let Some((i, line)) = lines.next() else {
+        let Some((row, line)) = lines.next() else {
             break;
         };
         let line = line.trim_ascii();
@@ -17,7 +17,7 @@ pub fn parse(raw: &str) -> Result<Sections, Err> {
         };
         let id = line[1..].trim_ascii();
         if id.is_empty() {
-            return Err(Err::new(ErrKind::NoID, i));
+            return Err(Err::new(ErrKind::NoID, row));
         }
         match kind {
             'R' => parser.parse_room(id, &mut lines)?,
@@ -25,7 +25,7 @@ pub fn parse(raw: &str) -> Result<Sections, Err> {
             'I' => parser.parse_image(id, &mut lines)?,
             'P' => parser.parse_player(id, &mut lines)?,
             'A' => parser.parse_actions(id, &mut lines)?,
-            _ => return Err(Err::new(ErrKind::UnknownSection, i)),
+            _ => return Err(Err::new(ErrKind::UnknownSection, row)),
         };
     }
     parser.finalize()
@@ -53,14 +53,34 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_room(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
+        for (oid, _) in &self.rooms {
+            if *oid == id {
+                let row = get_row(lines);
+                return Err(Err::new(ErrKind::DuplicateRoom, row));
+            }
+        }
+        // ...
         Ok(())
     }
 
     fn parse_tile(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
+        for (oid, _) in &self.tiles {
+            if *oid == id {
+                let row = get_row(lines);
+                return Err(Err::new(ErrKind::DuplicateTile, row));
+            }
+        }
+        // ...
         Ok(())
     }
 
     fn parse_image(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
+        for (oid, _) in &self.images {
+            if *oid == id {
+                let row = get_row(lines);
+                return Err(Err::new(ErrKind::DuplicateImage, row));
+            }
+        }
         Ok(())
     }
 
@@ -69,6 +89,12 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_actions(&mut self, id: &'a str, lines: &mut Lines<'a>) -> Result<(), Err> {
+        for (oid, _) in &self.actions {
+            if *oid == id {
+                let row = get_row(lines);
+                return Err(Err::new(ErrKind::DuplicateAction, row));
+            }
+        }
         Ok(())
     }
 
@@ -90,4 +116,11 @@ impl<'a> Parser<'a> {
 fn drop_ids<T>(items: Vec<(&'_ str, T)>) -> Box<[T]> {
     let items: Vec<T> = items.into_iter().map(|(_, v)| v).collect();
     items.into_boxed_slice()
+}
+
+fn get_row(lines: &mut Lines<'_>) -> usize {
+    match lines.next() {
+        Some((i, _)) => i - 1,
+        None => 0,
+    }
 }
