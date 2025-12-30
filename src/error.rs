@@ -15,6 +15,9 @@ pub enum ErrKind {
     UnknownSection,
     NoRooms,
     NoID,
+    NoValue,
+    UnknownProperty,
+    DuplicateProperty,
 
     DuplicateRoom,
     DuplicateTile,
@@ -38,6 +41,9 @@ impl ErrKind {
             ErrKind::UnknownSection => "unknown section type",
             ErrKind::NoRooms => "file has no rooms",
             ErrKind::NoID => "ID is missing",
+            ErrKind::NoValue => "property has no value",
+            ErrKind::UnknownProperty => "unknown property",
+            ErrKind::DuplicateProperty => "duplicate property",
 
             ErrKind::DuplicateRoom => "duplicate room ID",
             ErrKind::DuplicateTile => "duplicate tile ID",

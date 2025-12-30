@@ -19,7 +19,7 @@ pub struct Room {
     pub tiles: [[ID; 30]; 20],
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Tile {
     pub image: Option<ID>,
     pub wall: bool,

@@ -64,10 +64,10 @@ impl<'a> Parser<'a> {
             return Err(Err::new(ErrKind::DuplicateRoom, first_row));
         }
         let mut room: Vec<[usize; 30]> = Vec::new();
-        for (row, line) in lines.by_ref() {
+        for (row, line) in lines {
             let line = line.trim_ascii();
             if line.is_empty() {
-                return Err(Err::new(ErrKind::SmallRoomY, first_row));
+                break;
             }
             let mut tiles = Vec::new();
             for tile_id in line.split_ascii_whitespace() {
@@ -102,7 +102,52 @@ impl<'a> Parser<'a> {
         if self.tiles.is_defined(id) {
             return Err(Err::new(ErrKind::DuplicateTile, first_row));
         }
-        // ...
+        let mut tile = Tile::default();
+        for (row, line) in lines {
+            let line = line.trim_ascii();
+            if line.is_empty() {
+                break;
+            }
+            let Some((name, rest)) = line.split_once(' ') else {
+                return Err(Err::new(ErrKind::NoValue, row));
+            };
+            let rest = rest.trim_ascii();
+            match name {
+                "IMAGE" => {
+                    if tile.image.is_some() {
+                        return Err(Err::new(ErrKind::DuplicateProperty, row));
+                    }
+                    let image_id = self.images.reference(rest, row);
+                    tile.image = Some(image_id);
+                }
+                "WALL" => {
+                    if tile.wall {
+                        return Err(Err::new(ErrKind::DuplicateProperty, row));
+                    }
+                    tile.wall = rest == "1"
+                }
+                "PLAYER" => {
+                    if tile.player != 0 {
+                        return Err(Err::new(ErrKind::DuplicateProperty, row));
+                    }
+                    tile.player = match rest {
+                        "1" => 1,
+                        "2" => 2,
+                        "3" => 3,
+                        _ => 4,
+                    }
+                }
+                "ACTION" => {
+                    if tile.action.is_some() {
+                        return Err(Err::new(ErrKind::DuplicateProperty, row));
+                    }
+                    let action_id = self.actions.reference(rest, row);
+                    tile.action = Some(action_id);
+                }
+                _ => return Err(Err::new(ErrKind::UnknownProperty, row)),
+            };
+        }
+        self.tiles.define(id, tile);
         Ok(())
     }
 
