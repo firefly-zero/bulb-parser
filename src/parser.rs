@@ -114,7 +114,7 @@ impl<'a> Parser<'a> {
             };
             let rest = rest.trim_ascii();
             match name {
-                "IMAGE" => {
+                "IMAGE" | "I" => {
                     if tile.image.is_some() {
                         return Err(Err::new(ErrKind::DuplicateProperty, row));
                     }
@@ -138,7 +138,7 @@ impl<'a> Parser<'a> {
                         _ => 4,
                     }
                 }
-                "ACTION" => {
+                "ACTION" | "A" => {
                     if tile.action.is_some() {
                         return Err(Err::new(ErrKind::DuplicateProperty, row));
                     }
