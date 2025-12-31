@@ -39,7 +39,7 @@ pub enum Action {
     /// End the game.
     End,
     /// Go to another room.
-    Exit(ID, u8, u8),
+    Move(ID, u8, u8),
     /// Replace the tile at the given position in the current room.
     Place(ID, Option<(u8, u8)>),
     /// If the condition is true, clear the stack and execute a different action.

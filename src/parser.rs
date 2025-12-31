@@ -208,12 +208,12 @@ impl<'a> Parser<'a> {
                     Action::Say(msg)
                 }
                 "END" => Action::End,
-                "EXIT" => {
+                "MOVE" => {
                     let (room_id, x, y) = split_3_args(rest, row)?;
                     let room_id = self.rooms.reference(room_id, row);
                     let x = parse_x(x, row)?;
                     let y = parse_y(y, row)?;
-                    Action::Exit(room_id, x, y)
+                    Action::Move(room_id, x, y)
                 }
                 "PLACE" => {
                     let mut parts = rest.split_ascii_whitespace();

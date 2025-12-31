@@ -47,7 +47,7 @@ impl State {
         match action {
             Action::Say(_) => {}
             Action::End => self.end = true,
-            Action::Exit(room, x, y) => {
+            Action::Move(room, x, y) => {
                 self.pos = Pos {
                     room: *room,
                     x: *x,
