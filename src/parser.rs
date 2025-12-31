@@ -212,9 +212,7 @@ impl<'a> Parser<'a> {
             if line.is_empty() {
                 break;
             }
-            let Some((name, rest)) = line.split_once(' ') else {
-                return Err(Err::new(ErrKind::NoValue, row));
-            };
+            let (name, rest) = line.split_once(' ').unwrap_or((line, ""));
             let rest = rest.trim_ascii();
             let action = match name {
                 "SAY" => {
