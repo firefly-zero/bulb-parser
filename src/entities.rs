@@ -41,6 +41,10 @@ impl<'a, T> Entities<'a, T> {
                 return i;
             }
         }
+        self.define_duplicate(id, value)
+    }
+
+    pub fn define_duplicate(&mut self, id: &'a str, value: T) -> usize {
         let entity = Entity {
             id,
             first_ref: 0,

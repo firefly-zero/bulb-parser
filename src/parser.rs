@@ -104,9 +104,17 @@ impl<'a> Parser<'a> {
             return Err(Err::new(ErrKind::DuplicateTile, first_row));
         }
         let mut tile = Tile::default();
-        for (row, line) in lines {
+        for (row, line) in lines.by_ref() {
             let line = line.trim_ascii();
             if line.is_empty() {
+                break;
+            }
+            if line == "A" {
+                let actions = self.parse_actions_inner(lines)?;
+                let action_id = self
+                    .actions
+                    .define_duplicate(id, actions.into_boxed_slice());
+                tile.action = Some(action_id);
                 break;
             }
             let Some((name, rest)) = line.split_once(' ') else {
@@ -192,6 +200,12 @@ impl<'a> Parser<'a> {
         if self.actions.is_defined(id) {
             return Err(Err::new(ErrKind::DuplicateAction, first_row));
         }
+        let actions = self.parse_actions_inner(lines)?;
+        self.actions.define(id, actions.into_boxed_slice());
+        Ok(())
+    }
+
+    fn parse_actions_inner(&mut self, lines: &mut Lines<'a>) -> Result<Vec<Action>, Err> {
         let mut actions = Vec::new();
         for (row, line) in lines {
             let line = line.trim_ascii();
@@ -265,8 +279,7 @@ impl<'a> Parser<'a> {
             };
             actions.push(action);
         }
-        self.actions.define(id, actions.into_boxed_slice());
-        Ok(())
+        Ok(actions)
     }
 
     fn finalize(self) -> Result<Sections, Err> {
