@@ -211,8 +211,8 @@ impl<'a> Parser<'a> {
                 "EXIT" => {
                     let (room_id, x, y) = split_3_args(rest, row)?;
                     let room_id = self.rooms.reference(room_id, row);
-                    let x = parse_hex(x, row)?;
-                    let y = parse_hex(y, row)?;
+                    let x = parse_x(x, row)?;
+                    let y = parse_y(y, row)?;
                     Action::Exit(room_id, x, y)
                 }
                 "PLACE" => {
@@ -221,8 +221,8 @@ impl<'a> Parser<'a> {
                     let tile_id = self.tiles.reference(tile_id, row);
                     if let Ok(x) = get_arg(&mut parts, row) {
                         let y = get_arg(&mut parts, row)?;
-                        let x = parse_hex(x, row)?;
-                        let y = parse_hex(y, row)?;
+                        let x = parse_x(x, row)?;
+                        let y = parse_y(y, row)?;
                         Action::Place(tile_id, Some((x, y)))
                     } else {
                         Action::Place(tile_id, None)
@@ -397,5 +397,25 @@ fn parse_val(s: &str, row: usize) -> Result<i32, Err> {
     let Ok(val) = s.parse() else {
         return Err(Err::new(ErrKind::BadCmp, row));
     };
+    Ok(val)
+}
+
+fn parse_x(s: &str, row: usize) -> Result<u8, Err> {
+    let Ok(val) = s.parse() else {
+        return Err(Err::new(ErrKind::BadX, row));
+    };
+    if val >= 30 {
+        return Err(Err::new(ErrKind::BadX, row));
+    }
+    Ok(val)
+}
+
+fn parse_y(s: &str, row: usize) -> Result<u8, Err> {
+    let Ok(val) = s.parse() else {
+        return Err(Err::new(ErrKind::BadY, row));
+    };
+    if val >= 20 {
+        return Err(Err::new(ErrKind::BadY, row));
+    }
     Ok(val)
 }

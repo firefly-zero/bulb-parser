@@ -21,6 +21,9 @@ pub enum ErrKind {
     DuplicateProperty,
     BadHex,
     BadCmp,
+    BadVal,
+    BadX,
+    BadY,
     NotEnoughArgs,
     TooManyArgs,
 
@@ -57,6 +60,9 @@ impl ErrKind {
             ErrKind::DuplicateProperty => "duplicate property",
             ErrKind::BadHex => "invalid hexadecimal digit",
             ErrKind::BadCmp => "unknown comparison operator",
+            ErrKind::BadVal => "invalid integer",
+            ErrKind::BadX => "invalid X coordinate",
+            ErrKind::BadY => "invalid Y coordinate",
             ErrKind::NotEnoughArgs => "not enough arguments",
             ErrKind::TooManyArgs => "too many arguments",
 
