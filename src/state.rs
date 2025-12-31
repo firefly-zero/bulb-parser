@@ -85,7 +85,10 @@ impl State {
             }
             Action::Set(id, val) => self.vars[*id] = *val,
             Action::Add(id, val) => self.vars[*id] += val,
-            Action::Enqueue(id) => self.enqueue(*id),
+            Action::Jump(id) => {
+                self.queue.clear();
+                self.enqueue(*id);
+            }
         }
     }
 }

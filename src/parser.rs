@@ -255,9 +255,9 @@ impl<'a> Parser<'a> {
                     let val = parse_val(val, row)?;
                     Action::Add(var_id, val)
                 }
-                "ENQUEUE" => {
+                "JUMP" => {
                     let action_id = self.actions.reference(rest, row);
-                    Action::Enqueue(action_id)
+                    Action::Jump(action_id)
                 }
                 _ => {
                     return Err(Err::new(ErrKind::UnknownProperty, row));

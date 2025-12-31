@@ -50,8 +50,8 @@ pub enum Action {
     ///
     /// Negative values can be used to substract.
     Add(ID, i32),
-    /// Push an action at the end of the stack.
-    Enqueue(ID),
+    /// Clear the stack and execute the given action set instead.
+    Jump(ID),
 }
 
 #[derive(Debug, Clone)]
