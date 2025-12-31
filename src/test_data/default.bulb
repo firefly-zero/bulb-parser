@@ -96,4 +96,5 @@ SAY Yes, I can talk.
 
 A key
 SAY You found a key!
-PICK .
+ADD key 1
+PLACE .

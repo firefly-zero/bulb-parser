@@ -36,17 +36,12 @@ pub struct Image {
 pub enum Action {
     /// Print a dialog line.
     Say(String),
-    /// Pick up the tile as an item.
-    ///
-    /// Adds +1 to the value of the given variable
-    /// and removes the tile from the room.
-    Pick(ID),
     /// End the game.
     End,
     /// Go to another room.
     Exit(ID, u8, u8),
     /// Replace the tile at the given position in the current room.
-    Place(ID, u8, u8),
+    Place(ID, Option<(u8, u8)>),
     /// If the condition is true, clear the stack and execute a different action.
     Branch(Cond, Option<ID>),
     /// Assign the given value to the variable.

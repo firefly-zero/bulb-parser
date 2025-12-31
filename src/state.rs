@@ -46,14 +46,6 @@ impl State {
     pub fn apply(&mut self, action: &Action) {
         match action {
             Action::Say(_) => {}
-            Action::Pick(new_id) => {
-                let room = &mut self.sections.rooms[self.pos.room];
-                let x = usize::from(self.pos.x);
-                let y = usize::from(self.pos.y);
-                let old_id = room.tiles[y][x];
-                self.vars[old_id] += 1;
-                room.tiles[y][x] = *new_id;
-            }
             Action::End => self.end = true,
             Action::Exit(room, x, y) => {
                 self.pos = Pos {
@@ -62,10 +54,15 @@ impl State {
                     y: *y,
                 }
             }
-            Action::Place(id, x, y) => {
+            Action::Place(id, pos) => {
                 let room = &mut self.sections.rooms[self.pos.room];
-                let x = usize::from(*x);
-                let y = usize::from(*y);
+                let (x, y) = if let Some(pos) = pos {
+                    *pos
+                } else {
+                    (self.pos.x, self.pos.y)
+                };
+                let x = usize::from(x);
+                let y = usize::from(y);
                 room.tiles[y][x] = *id;
             }
             Action::Branch(cond, id) => {

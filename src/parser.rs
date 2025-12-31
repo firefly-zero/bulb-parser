@@ -207,10 +207,6 @@ impl<'a> Parser<'a> {
                     let msg = rest.to_owned();
                     Action::Say(msg)
                 }
-                "PICK" => {
-                    let tile_id = self.tiles.reference(rest, row);
-                    Action::Pick(tile_id)
-                }
                 "END" => Action::End,
                 "EXIT" => {
                     let (room_id, x, y) = split_3_args(rest, row)?;
@@ -220,23 +216,23 @@ impl<'a> Parser<'a> {
                     Action::Exit(room_id, x, y)
                 }
                 "PLACE" => {
-                    let (tile_id, x, y) = split_3_args(rest, row)?;
+                    let mut parts = rest.split_ascii_whitespace();
+                    let tile_id = get_arg(&mut parts, row)?;
                     let tile_id = self.tiles.reference(tile_id, row);
-                    let x = parse_hex(x, row)?;
-                    let y = parse_hex(y, row)?;
-                    Action::Place(tile_id, x, y)
+                    if let Ok(x) = get_arg(&mut parts, row) {
+                        let y = get_arg(&mut parts, row)?;
+                        let x = parse_hex(x, row)?;
+                        let y = parse_hex(y, row)?;
+                        Action::Place(tile_id, Some((x, y)))
+                    } else {
+                        Action::Place(tile_id, None)
+                    }
                 }
                 "BRANCH" => {
                     let mut parts = rest.split_ascii_whitespace();
-                    let Some(lhs) = parts.next() else {
-                        return Err(Err::new(ErrKind::NotEnoughArgs, row));
-                    };
-                    let Some(cmp) = parts.next() else {
-                        return Err(Err::new(ErrKind::NotEnoughArgs, row));
-                    };
-                    let Some(rhs) = parts.next() else {
-                        return Err(Err::new(ErrKind::NotEnoughArgs, row));
-                    };
+                    let lhs = get_arg(&mut parts, row)?;
+                    let cmp = get_arg(&mut parts, row)?;
+                    let rhs = get_arg(&mut parts, row)?;
                     let id = match parts.next() {
                         Some(id) => Some(self.actions.reference(id, row)),
                         None => None,
@@ -355,12 +351,8 @@ fn parse_hex(s: &str, row: usize) -> Result<u8, Err> {
 
 fn split_2_args(rest: &str, row: usize) -> Result<(&str, &str), Err> {
     let mut parts = rest.split_ascii_whitespace();
-    let Some(x) = parts.next() else {
-        return Err(Err::new(ErrKind::NotEnoughArgs, row));
-    };
-    let Some(y) = parts.next() else {
-        return Err(Err::new(ErrKind::NotEnoughArgs, row));
-    };
+    let x = get_arg(&mut parts, row)?;
+    let y = get_arg(&mut parts, row)?;
     if parts.next().is_some() {
         return Err(Err::new(ErrKind::TooManyArgs, row));
     }
@@ -369,19 +361,23 @@ fn split_2_args(rest: &str, row: usize) -> Result<(&str, &str), Err> {
 
 fn split_3_args(rest: &str, row: usize) -> Result<(&str, &str, &str), Err> {
     let mut parts = rest.split_ascii_whitespace();
-    let Some(id) = parts.next() else {
-        return Err(Err::new(ErrKind::NotEnoughArgs, row));
-    };
-    let Some(x) = parts.next() else {
-        return Err(Err::new(ErrKind::NotEnoughArgs, row));
-    };
-    let Some(y) = parts.next() else {
-        return Err(Err::new(ErrKind::NotEnoughArgs, row));
-    };
+    let id = get_arg(&mut parts, row)?;
+    let x = get_arg(&mut parts, row)?;
+    let y = get_arg(&mut parts, row)?;
     if parts.next().is_some() {
         return Err(Err::new(ErrKind::TooManyArgs, row));
     }
     Ok((id, x, y))
+}
+
+fn get_arg<'a>(
+    parts: &mut core::str::SplitAsciiWhitespace<'a>,
+    row: usize,
+) -> Result<&'a str, Err> {
+    let Some(arg) = parts.next() else {
+        return Err(Err::new(ErrKind::NotEnoughArgs, row));
+    };
+    Ok(arg)
 }
 
 fn parse_cmp(s: &str, row: usize) -> Result<Cmp, Err> {
