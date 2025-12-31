@@ -6,10 +6,10 @@ use alloc::vec::Vec;
 #[derive(Debug)]
 pub struct State {
     pub sections: Sections,
-    pub vars: Vec<i32>,
     pub end: bool,
     pub pos: Pos,
-    pub queue: VecDeque<Action>,
+    vars: Vec<i32>,
+    queue: VecDeque<Action>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -37,6 +37,10 @@ impl State {
         for action in actions {
             self.queue.push_back(action.clone());
         }
+    }
+
+    pub fn pop(&mut self) -> Option<Action> {
+        self.queue.pop_front()
     }
 
     pub fn apply(&mut self, action: &Action) {
