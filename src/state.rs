@@ -51,7 +51,24 @@ impl State {
                 let y = usize::from(*y);
                 room.tiles[y][x] = *id;
             }
-            Action::Branch(_, _) => todo!(),
+            Action::Branch(cond, id) => {
+                let lhs = self.vars[cond.lhs];
+                let rhs = cond.rhs;
+                let should_branch = match cond.cmp {
+                    Cmp::Lt => lhs < rhs,
+                    Cmp::Lte => lhs <= rhs,
+                    Cmp::Gt => lhs > rhs,
+                    Cmp::Gte => lhs >= rhs,
+                    Cmp::Eq => lhs == rhs,
+                    Cmp::Ne => lhs != rhs,
+                };
+                if should_branch {
+                    self.queue.clear();
+                    if let Some(id) = id {
+                        self.enqueue(*id);
+                    }
+                }
+            }
             Action::Set(id, val) => self.vars[*id] = *val,
             Action::Add(id, val) => self.vars[*id] += val,
             Action::Enqueue(id) => self.enqueue(*id),
