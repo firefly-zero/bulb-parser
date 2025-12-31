@@ -1,5 +1,6 @@
 use crate::*;
 use alloc::collections::VecDeque;
+use alloc::vec;
 use alloc::vec::Vec;
 
 #[derive(Debug)]
@@ -19,6 +20,18 @@ pub struct Pos {
 }
 
 impl State {
+    pub fn new(sections: Sections) -> Self {
+        let start = find_start(&sections);
+        let n_vars = sections.n_vars;
+        Self {
+            sections,
+            vars: vec![0; n_vars],
+            end: false,
+            pos: start,
+            queue: VecDeque::new(),
+        }
+    }
+
     pub fn enqueue(&mut self, id: usize) {
         let actions = &self.sections.actions[id];
         for action in actions {
@@ -74,4 +87,35 @@ impl State {
             Action::Enqueue(id) => self.enqueue(*id),
         }
     }
+}
+
+fn find_start(sections: &Sections) -> Pos {
+    let tile = find_start_tile(sections);
+    for (id, room) in sections.rooms.iter().enumerate() {
+        for (y, line) in room.tiles.iter().enumerate() {
+            for (x, room_tile) in line.iter().enumerate() {
+                if *room_tile == tile {
+                    return Pos {
+                        room: id,
+                        x: x as u8,
+                        y: y as u8,
+                    };
+                }
+            }
+        }
+    }
+    Pos {
+        room: 0,
+        x: 8,
+        y: 8,
+    }
+}
+
+fn find_start_tile(sections: &Sections) -> usize {
+    for (i, tile) in sections.tiles.iter().enumerate() {
+        if tile.start != 0 {
+            return i;
+        }
+    }
+    0
 }
