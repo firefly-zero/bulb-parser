@@ -301,7 +301,7 @@ fn parse_image_as_bytes<'a>(lines: &mut Lines<'a>, first_row: usize) -> Result<[
     raw[1] = 4; // BPP
     raw[2] = WIDTH; // width
     raw[3] = 0; // width
-    raw[4] = 255; // transparency
+    raw[4] = 15; // transparency
     // color swaps
     for i in 0u8..8u8 {
         raw[5 + i as usize] = ((i * 2) << 4) | (i * 2 + 1);
@@ -348,7 +348,7 @@ fn parse_hex(s: &str, row: usize) -> Result<u8, Err> {
         return Ok(ch - b'A');
     }
     if ch == b'.' {
-        return Ok(1);
+        return Ok(16);
     }
     Err(Err::new(ErrKind::BadHex, row))
 }
