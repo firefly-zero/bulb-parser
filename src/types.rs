@@ -32,7 +32,7 @@ pub struct Image {
     pub raw: [u8; 45],
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Action {
     /// Print a dialog line.
     Say(String),
@@ -59,7 +59,7 @@ pub enum Action {
     Enqueue(ID),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Cond {
     pub lhs: ID,
     pub cmp: Cmp,
@@ -67,7 +67,7 @@ pub struct Cond {
 }
 
 /// Comparison operator.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Cmp {
     /// `<`: Less than.
     Lt,
