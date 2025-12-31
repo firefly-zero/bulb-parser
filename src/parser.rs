@@ -342,10 +342,10 @@ fn parse_hex(s: &str, row: usize) -> Result<u8, Err> {
         return Ok(ch - b'0');
     }
     if (b'a'..=b'f').contains(&ch) {
-        return Ok(ch - b'a');
+        return Ok(10 + ch - b'a');
     }
     if (b'A'..=b'F').contains(&ch) {
-        return Ok(ch - b'A');
+        return Ok(10 + ch - b'A');
     }
     if ch == b'.' {
         return Ok(16);
