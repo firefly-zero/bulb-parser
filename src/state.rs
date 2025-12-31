@@ -29,7 +29,14 @@ impl State {
     pub fn apply(&mut self, action: &Action) {
         match action {
             Action::Say(_) => {}
-            Action::Pick(_) => todo!(),
+            Action::Pick(new_id) => {
+                let room = &mut self.sections.rooms[self.pos.room];
+                let x = usize::from(self.pos.x);
+                let y = usize::from(self.pos.y);
+                let old_id = room.tiles[y][x];
+                self.vars[old_id] += 1;
+                room.tiles[y][x] = *new_id;
+            }
             Action::End => self.end = true,
             Action::Exit(room, x, y) => {
                 self.pos = Pos {
