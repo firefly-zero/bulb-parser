@@ -2,5 +2,18 @@
 name = "bulb-parser"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.91.0"
+authors = ["Firefly Zero team"]
+description = "Parser and interpreter for Bulb Script"
+repository = "https://github.com/firefly-zero/bulb-parser"
+license = "MIT"
+keywords = ["gamedev", "firefly-zero"]
+categories = [
+    "compilers",
+    "no-std",
+    "game-engines",
+    "parsing",
+    "parser-implementations",
+]
 
 [dependencies]
