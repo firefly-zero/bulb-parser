@@ -71,6 +71,10 @@ impl<'a, T> Entities<'a, T> {
         self.items.len()
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &Option<T>> {
+        self.items.iter().map(|x| &x.value)
+    }
+
     pub fn finalize(self, kind: ErrKind) -> Result<Box<[T]>, Err> {
         let mut result: Vec<T> = Vec::new();
         for entity in self.items {

@@ -41,6 +41,7 @@ struct Parser<'a> {
     pub actions: Entities<'a, Box<[Action]>>,
     pub vars: Entities<'a, ()>,
     pub player: Option<usize>,
+    pub start_tile: Option<usize>,
 }
 
 impl<'a> Parser<'a> {
@@ -52,6 +53,7 @@ impl<'a> Parser<'a> {
             actions: Entities::new(),
             vars: Entities::new(),
             player: None,
+            start_tile: None,
         }
     }
 
@@ -156,7 +158,11 @@ impl<'a> Parser<'a> {
                 _ => return Err(Err::new(ErrKind::UnknownProperty, row)),
             };
         }
-        self.tiles.define(id, tile);
+        let is_start = tile.start != 0;
+        let tile_id = self.tiles.define(id, tile);
+        if is_start {
+            self.start_tile = Some(tile_id);
+        }
         Ok(())
     }
 
@@ -294,6 +300,12 @@ impl<'a> Parser<'a> {
     }
 
     fn finalize(self) -> Result<Sections, Err> {
+        let Some(start_tile) = self.start_tile else {
+            return Err(Err::new(ErrKind::NoStart, 0));
+        };
+        let Some(start_pos) = find_tile_pos(&self.rooms, start_tile) else {
+            return Err(Err::new(ErrKind::UnusedStart, 0));
+        };
         if self.rooms.is_empty() {
             return Err(Err::new(ErrKind::NoRooms, 0));
         }
@@ -304,6 +316,8 @@ impl<'a> Parser<'a> {
             actions: self.actions.finalize(ErrKind::UndefinedAction)?,
             player: self.player,
             n_vars: self.vars.len(),
+            start_tile,
+            start_pos,
         };
         Ok(sections)
     }
@@ -442,4 +456,24 @@ fn parse_y(s: &str, row: usize) -> Result<u8, Err> {
         return Err(Err::new(ErrKind::BadY, row));
     }
     Ok(val)
+}
+
+fn find_tile_pos(rooms: &Entities<'_, Room>, tile: usize) -> Option<Pos> {
+    for (id, room) in rooms.iter().enumerate() {
+        let Some(room) = room else {
+            continue;
+        };
+        for (y, line) in room.tiles.iter().enumerate() {
+            for (x, room_tile) in line.iter().enumerate() {
+                if *room_tile == tile {
+                    return Some(Pos {
+                        room: id,
+                        x: x as u8,
+                        y: y as u8,
+                    });
+                }
+            }
+        }
+    }
+    None
 }

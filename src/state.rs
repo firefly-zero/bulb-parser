@@ -17,22 +17,10 @@ pub struct State {
     queue: VecDeque<Action>,
 }
 
-#[derive(Debug, Copy, Clone)]
-pub struct Pos {
-    pub room: usize,
-    pub x: u8,
-    pub y: u8,
-}
-
 impl State {
-    pub fn new(sections: Sections) -> Result<Self, StateErr> {
-        let Some(tile_id) = find_start_tile(&sections) else {
-            return Err(StateErr::NoStart);
-        };
-        let Some(start_pos) = find_tile_pos(&sections, tile_id) else {
-            return Err(StateErr::UnusedStart);
-        };
+    pub fn new(sections: Sections) -> Self {
         let n_vars = sections.n_vars;
+        let start_pos = sections.start_pos;
         let mut state = Self {
             sections,
             vars: vec![0; n_vars],
@@ -42,11 +30,11 @@ impl State {
             tile_pos: start_pos,
             queue: VecDeque::new(),
         };
-        let tile = &state.sections.tiles[tile_id];
+        let tile = &state.sections.tiles[state.sections.start_tile];
         if let Some(action_id) = tile.action {
             state.enqueue(action_id);
         }
-        Ok(state)
+        state
     }
 
     pub fn enqueue(&mut self, id: usize) {
@@ -114,32 +102,6 @@ impl State {
             }
         }
     }
-}
-
-fn find_tile_pos(sections: &Sections, tile: usize) -> Option<Pos> {
-    for (id, room) in sections.rooms.iter().enumerate() {
-        for (y, line) in room.tiles.iter().enumerate() {
-            for (x, room_tile) in line.iter().enumerate() {
-                if *room_tile == tile {
-                    return Some(Pos {
-                        room: id,
-                        x: x as u8,
-                        y: y as u8,
-                    });
-                }
-            }
-        }
-    }
-    None
-}
-
-fn find_start_tile(sections: &Sections) -> Option<usize> {
-    for (i, tile) in sections.tiles.iter().enumerate() {
-        if tile.start != 0 {
-            return Some(i);
-        }
-    }
-    None
 }
 
 /// Use xor-shift algorithm to derive a random number from the given value.

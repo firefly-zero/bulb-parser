@@ -12,6 +12,8 @@ pub struct Sections {
     pub actions: Array<Array<Action>>,
     pub player: Option<ID>,
     pub n_vars: usize,
+    pub start_tile: usize,
+    pub start_pos: Pos,
 }
 
 #[derive(Debug)]
@@ -77,4 +79,11 @@ pub enum Cmp {
     Eq,
     /// `!=`: Not equal.
     Ne,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct Pos {
+    pub room: usize,
+    pub x: u8,
+    pub y: u8,
 }

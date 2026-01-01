@@ -1,19 +1,4 @@
 #[derive(Clone, Debug)]
-pub enum StateErr {
-    NoStart,
-    UnusedStart,
-}
-
-impl StateErr {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            StateErr::NoStart => "START tile not found",
-            StateErr::UnusedStart => "START tile is not used in any room",
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
 pub struct Err {
     pub kind: ErrKind,
     pub row: usize,
@@ -28,7 +13,6 @@ impl Err {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ErrKind {
     UnknownSection,
-    NoRooms,
     NoID,
     BadPlayerID,
     NoValue,
@@ -62,6 +46,10 @@ pub enum ErrKind {
     SmallImageY,
     BigImageX,
     BigImageY,
+
+    NoRooms,
+    NoStart,
+    UnusedStart,
 }
 
 impl ErrKind {
@@ -102,6 +90,9 @@ impl ErrKind {
             ErrKind::SmallImageY => "image has not enough rows",
             ErrKind::BigImageX => "image row has too many columns",
             ErrKind::BigImageY => "image row has too many rows",
+
+            ErrKind::NoStart => "START tile not found",
+            ErrKind::UnusedStart => "START tile is not used in any room",
         }
     }
 }

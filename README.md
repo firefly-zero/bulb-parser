@@ -24,7 +24,7 @@ We `unwrap` here but you probably want to nicely handle the error and show it to
 Make a state manager (aka interpreter) and run some actions:
 
 ```rust
-let mut state = bulb_parser::State::new(sections).unwrap();
+let mut state = bulb_parser::State::new(sections);
 state.enqueue("action_id");
 loop {
     let Some(action) = state.pop() else {
