@@ -246,12 +246,13 @@ impl<'a> Parser<'a> {
                     let cmp = get_arg(&mut parts, row)?;
                     let rhs = get_arg(&mut parts, row)?;
                     let sep = get_arg(&mut parts, row)?;
-                    if sep != "THEN" {
-                        return Err(Err::new(ErrKind::NoThen, row));
-                    }
-                    let id = match parts.next() {
-                        Some(id) => Some(self.actions.reference(id, row)),
-                        None => None,
+                    let id = match sep {
+                        "JUMP" => {
+                            let id = get_arg(&mut parts, row)?;
+                            Some(self.actions.reference(id, row))
+                        }
+                        "BREAK" => None,
+                        _ => return Err(Err::new(ErrKind::NoJump, row)),
                     };
                     let lhs = self.vars.reference(lhs, row);
                     let cmp = parse_cmp(cmp, row)?;

@@ -26,7 +26,7 @@ pub enum ErrKind {
     BadY,
     NotEnoughArgs,
     TooManyArgs,
-    NoThen,
+    NoJump,
 
     DuplicateRoom,
     DuplicateTile,
@@ -66,7 +66,7 @@ impl ErrKind {
             ErrKind::BadY => "invalid Y coordinate",
             ErrKind::NotEnoughArgs => "not enough arguments",
             ErrKind::TooManyArgs => "too many arguments",
-            ErrKind::NoThen => "THEN not found at the expected position",
+            ErrKind::NoJump => "JUMP or BREAK not found at the expected position",
 
             ErrKind::DuplicateRoom => "duplicate room ID",
             ErrKind::DuplicateTile => "duplicate tile ID",
