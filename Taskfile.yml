@@ -12,7 +12,6 @@ tasks:
       - git push
       - git push --tags
       - gh release create --generate-notes {{.CLI_ARGS}}
-      - gh release upload {{.CLI_ARGS}} main.wasm
 
   format:
     desc: "run code formatters"
