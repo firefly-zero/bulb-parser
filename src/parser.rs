@@ -300,17 +300,18 @@ impl<'a> Parser<'a> {
     }
 
     fn finalize(self) -> Result<Sections, Err> {
-        let Some(start_tile) = self.start_tile else {
-            return Err(Err::new(ErrKind::NoStart, 0));
-        };
-        let Some(start_pos) = find_tile_pos(&self.rooms, start_tile) else {
-            return Err(Err::new(ErrKind::UnusedStart, 0));
-        };
         if self.rooms.is_empty() {
             return Err(Err::new(ErrKind::NoRooms, 0));
         }
+        let rooms = self.rooms.finalize(ErrKind::UndefinedRoom)?;
+        let Some(start_tile) = self.start_tile else {
+            return Err(Err::new(ErrKind::NoStart, 0));
+        };
+        let Some(start_pos) = find_tile_pos(&rooms, start_tile) else {
+            return Err(Err::new(ErrKind::UnusedStart, 0));
+        };
         let sections = Sections {
-            rooms: self.rooms.finalize(ErrKind::UndefinedRoom)?,
+            rooms,
             tiles: self.tiles.finalize(ErrKind::UndefinedTile)?,
             images: self.images.finalize(ErrKind::UndefinedImage)?,
             actions: self.actions.finalize(ErrKind::UndefinedAction)?,
@@ -458,11 +459,8 @@ fn parse_y(s: &str, row: usize) -> Result<u8, Err> {
     Ok(val)
 }
 
-fn find_tile_pos(rooms: &Entities<'_, Room>, tile: usize) -> Option<Pos> {
+fn find_tile_pos(rooms: &[Room], tile: usize) -> Option<Pos> {
     for (id, room) in rooms.iter().enumerate() {
-        let Some(room) = room else {
-            continue;
-        };
         for (y, line) in room.tiles.iter().enumerate() {
             for (x, room_tile) in line.iter().enumerate() {
                 if *room_tile == tile {
