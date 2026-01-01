@@ -1,4 +1,19 @@
 #[derive(Clone, Debug)]
+pub enum StateErr {
+    NoStart,
+    UnusedStart,
+}
+
+impl StateErr {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            StateErr::NoStart => "START tile not found",
+            StateErr::UnusedStart => "START tile is not used in any room",
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Err {
     pub kind: ErrKind,
     pub row: usize,

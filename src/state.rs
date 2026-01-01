@@ -25,18 +25,28 @@ pub struct Pos {
 }
 
 impl State {
-    pub fn new(sections: Sections) -> Self {
-        let start = find_start(&sections);
+    pub fn new(sections: Sections) -> Result<Self, StateErr> {
+        let Some(tile_id) = find_start_tile(&sections) else {
+            return Err(StateErr::NoStart);
+        };
+        let Some(start_pos) = find_tile_pos(&sections, tile_id) else {
+            return Err(StateErr::UnusedStart);
+        };
         let n_vars = sections.n_vars;
-        Self {
+        let mut state = Self {
             sections,
             vars: vec![0; n_vars],
             end: false,
-            pos: start,
+            pos: start_pos,
             seed: 1337,
-            tile_pos: start,
+            tile_pos: start_pos,
             queue: VecDeque::new(),
+        };
+        let tile = &state.sections.tiles[tile_id];
+        if let Some(action_id) = tile.action {
+            state.enqueue(action_id);
         }
+        Ok(state)
     }
 
     pub fn enqueue(&mut self, id: usize) {
@@ -106,35 +116,30 @@ impl State {
     }
 }
 
-fn find_start(sections: &Sections) -> Pos {
-    let tile = find_start_tile(sections);
+fn find_tile_pos(sections: &Sections, tile: usize) -> Option<Pos> {
     for (id, room) in sections.rooms.iter().enumerate() {
         for (y, line) in room.tiles.iter().enumerate() {
             for (x, room_tile) in line.iter().enumerate() {
                 if *room_tile == tile {
-                    return Pos {
+                    return Some(Pos {
                         room: id,
                         x: x as u8,
                         y: y as u8,
-                    };
+                    });
                 }
             }
         }
     }
-    Pos {
-        room: 0,
-        x: 8,
-        y: 8,
-    }
+    None
 }
 
-fn find_start_tile(sections: &Sections) -> usize {
+fn find_start_tile(sections: &Sections) -> Option<usize> {
     for (i, tile) in sections.tiles.iter().enumerate() {
         if tile.start != 0 {
-            return i;
+            return Some(i);
         }
     }
-    0
+    None
 }
 
 /// Use xor-shift algorithm to derive a random number from the given value.
