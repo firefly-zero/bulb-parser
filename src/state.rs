@@ -6,8 +6,12 @@ use alloc::vec::Vec;
 #[derive(Debug)]
 pub struct State {
     pub sections: Sections,
+    /// If true, the game has ended and there is nothing else to do.
     pub end: bool,
+    /// The current position of the player.
     pub pos: Pos,
+    /// The position of the currently active tile.
+    pub tile_pos: Pos,
     vars: Vec<i32>,
     queue: VecDeque<Action>,
 }
@@ -28,6 +32,7 @@ impl State {
             vars: vec![0; n_vars],
             end: false,
             pos: start,
+            tile_pos: start,
             queue: VecDeque::new(),
         }
     }
@@ -59,7 +64,7 @@ impl State {
                 let (x, y) = if let Some(pos) = pos {
                     *pos
                 } else {
-                    (self.pos.x, self.pos.y)
+                    (self.tile_pos.x, self.tile_pos.y)
                 };
                 let x = usize::from(x);
                 let y = usize::from(y);
