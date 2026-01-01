@@ -240,11 +240,15 @@ impl<'a> Parser<'a> {
                         Action::Place(tile_id, None)
                     }
                 }
-                "BRANCH" => {
+                "IF" => {
                     let mut parts = rest.split_ascii_whitespace();
                     let lhs = get_arg(&mut parts, row)?;
                     let cmp = get_arg(&mut parts, row)?;
                     let rhs = get_arg(&mut parts, row)?;
+                    let sep = get_arg(&mut parts, row)?;
+                    if sep != "THEN" {
+                        return Err(Err::new(ErrKind::NoThen, row));
+                    }
                     let id = match parts.next() {
                         Some(id) => Some(self.actions.reference(id, row)),
                         None => None,
@@ -253,7 +257,7 @@ impl<'a> Parser<'a> {
                     let cmp = parse_cmp(cmp, row)?;
                     let rhs = parse_val(rhs, row)?;
                     let cond = Cond { lhs, cmp, rhs };
-                    Action::Branch(cond, id)
+                    Action::If(cond, id)
                 }
                 "SET" => {
                     let (var_id, val) = split_2_args(rest, row)?;

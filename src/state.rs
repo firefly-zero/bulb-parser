@@ -65,7 +65,7 @@ impl State {
                 let y = usize::from(y);
                 room.tiles[y][x] = *id;
             }
-            Action::Branch(cond, id) => {
+            Action::If(cond, id) => {
                 let lhs = self.vars[cond.lhs];
                 let rhs = cond.rhs;
                 let should_branch = match cond.cmp {

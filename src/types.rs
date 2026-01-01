@@ -43,7 +43,7 @@ pub enum Action {
     /// Replace the tile at the given position in the current room.
     Place(ID, Option<(u8, u8)>),
     /// If the condition is true, clear the stack and execute a different action.
-    Branch(Cond, Option<ID>),
+    If(Cond, Option<ID>),
     /// Assign the given value to the variable.
     Set(ID, i32),
     /// Add the given value to the variable.
