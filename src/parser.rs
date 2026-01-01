@@ -276,6 +276,14 @@ impl<'a> Parser<'a> {
                     let action_id = self.actions.reference(rest, row);
                     Action::Jump(action_id)
                 }
+                "SELECT" => {
+                    let mut subactions = Vec::new();
+                    for action in rest.split_ascii_whitespace() {
+                        let action = self.actions.reference(action, row);
+                        subactions.push(action);
+                    }
+                    Action::Select(subactions.into_boxed_slice())
+                }
                 _ => {
                     return Err(Err::new(ErrKind::UnknownProperty, row));
                 }

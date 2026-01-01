@@ -52,6 +52,7 @@ pub enum Action {
     Add(ID, i32),
     /// Clear the stack and execute the given action set instead.
     Jump(ID),
+    Select(Box<[ID]>),
 }
 
 #[derive(Debug, Clone)]

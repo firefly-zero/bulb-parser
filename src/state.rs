@@ -12,6 +12,7 @@ pub struct State {
     pub pos: Pos,
     /// The position of the currently active tile.
     pub tile_pos: Pos,
+    pub seed: u32,
     vars: Vec<i32>,
     queue: VecDeque<Action>,
 }
@@ -32,6 +33,7 @@ impl State {
             vars: vec![0; n_vars],
             end: false,
             pos: start,
+            seed: 1337,
             tile_pos: start,
             queue: VecDeque::new(),
         }
@@ -90,6 +92,12 @@ impl State {
             }
             Action::Set(id, val) => self.vars[*id] = *val,
             Action::Add(id, val) => self.vars[*id] += val,
+            Action::Select(ids) => {
+                self.seed = get_random(self.seed);
+                let idx = self.seed as usize % ids.len();
+                self.queue.clear();
+                self.enqueue(ids[idx]);
+            }
             Action::Jump(id) => {
                 self.queue.clear();
                 self.enqueue(*id);
@@ -127,4 +135,15 @@ fn find_start_tile(sections: &Sections) -> usize {
         }
     }
     0
+}
+
+/// Use xor-shift algorithm to derive a random number from the given value.
+fn get_random(mut x: u32) -> u32 {
+    if x == 0 {
+        x = 1;
+    }
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    x
 }
