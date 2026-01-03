@@ -207,7 +207,7 @@ impl<'a> Parser<'a> {
                     img.frames = frames
                 }
                 "PLAYER" => {
-                    if img.player.is_none() {
+                    if img.player.is_some() {
                         return Err(Err::new(ErrKind::DuplicateProperty, row));
                     }
                     let (peer, anim) = split_2_args(rest, row)?;
