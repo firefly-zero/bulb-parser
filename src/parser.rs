@@ -219,7 +219,11 @@ impl<'a> Parser<'a> {
                 _ => return Err(Err::new(ErrKind::UnknownProperty, row)),
             };
         }
-        self.images.define(id, img);
+        let is_player = img.player.0 != 0;
+        let image_id = self.images.define(id, img);
+        if is_player {
+            self.player = Some(image_id);
+        }
         Ok(())
     }
 
