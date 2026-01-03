@@ -29,7 +29,6 @@ pub fn parse(raw: &str) -> Result<Sections, Err> {
             'R' => parser.parse_room(id, &mut lines, row)?,
             'T' => parser.parse_tile(id, &mut lines, row)?,
             'I' => parser.parse_image(id, &mut lines, row)?,
-            'P' => parser.parse_player(id, &mut lines, row)?,
             'A' => parser.parse_actions(id, &mut lines, row)?,
             _ => return Err(Err::new(ErrKind::UnknownSection, row)),
         };
@@ -134,7 +133,7 @@ impl<'a> Parser<'a> {
                     let image_id = self.images.reference(rest, row);
                     tile.image = Some(image_id);
                 }
-                "WALL" => {
+                "WALL" | "W" => {
                     if tile.wall {
                         return Err(Err::new(ErrKind::DuplicateProperty, row));
                     }
@@ -178,25 +177,49 @@ impl<'a> Parser<'a> {
         if self.images.is_defined(id) {
             return Err(Err::new(ErrKind::DuplicateImage, first_row));
         }
-        let raw = parse_image_as_bytes(lines, first_row)?;
-        let image = Image { raw };
-        self.images.define(id, image);
-        Ok(())
-    }
-
-    fn parse_player(
-        &mut self,
-        id: &'a str,
-        lines: &mut Lines<'a>,
-        first_row: usize,
-    ) -> Result<(), Err> {
-        if id != "idle" {
-            return Err(Err::new(ErrKind::BadPlayerID, first_row));
+        let mut img = Image::default();
+        for (row, line) in lines.by_ref() {
+            let line = line.trim_ascii();
+            if line.is_empty() {
+                break;
+            }
+            let Some((name, rest)) = line.split_once(' ') else {
+                return Err(Err::new(ErrKind::NoValue, row));
+            };
+            let rest = rest.trim_ascii();
+            match name {
+                "POS" => {
+                    if img.pos != (0, 0) {
+                        return Err(Err::new(ErrKind::DuplicateProperty, row));
+                    }
+                    let (x, y) = split_2_args(rest, row)?;
+                    let x = parse_img_coord(x, row)?;
+                    let y = parse_img_coord(y, row)?;
+                    img.pos = (x, y);
+                }
+                "FRAMES" => {
+                    if img.frames != 0 {
+                        return Err(Err::new(ErrKind::DuplicateProperty, row));
+                    }
+                    let Ok(frames) = rest.parse() else {
+                        return Err(Err::new(ErrKind::BadCmp, row));
+                    };
+                    img.frames = frames
+                }
+                "PLAYER" => {
+                    if img.player.0 != 0 {
+                        return Err(Err::new(ErrKind::DuplicateProperty, row));
+                    }
+                    let (peer, anim) = split_2_args(rest, row)?;
+                    let Ok(peer) = peer.parse() else {
+                        return Err(Err::new(ErrKind::BadCmp, row));
+                    };
+                    img.player = (peer, anim.to_owned());
+                }
+                _ => return Err(Err::new(ErrKind::UnknownProperty, row)),
+            };
         }
-        let raw = parse_image_as_bytes(lines, first_row)?;
-        let image = Image { raw };
-        let image_id = self.images.define(id, image);
-        self.player = Some(image_id);
+        self.images.define(id, img);
         Ok(())
     }
 
@@ -327,70 +350,6 @@ impl<'a> Parser<'a> {
     }
 }
 
-fn parse_image_as_bytes<'a>(lines: &mut Lines<'a>, first_row: usize) -> Result<[u8; 45], Err> {
-    const WIDTH: u8 = 8;
-    const HEIGHT: u8 = 8;
-    const HEADER_SIZE: usize = 5 + 8;
-    const BODY_SIZE: u8 = WIDTH * HEIGHT / 2;
-    let mut raw = [0; HEADER_SIZE + BODY_SIZE as usize];
-
-    // Header.
-    raw[0] = 0x21; // magic number
-    raw[1] = 4; // BPP
-    raw[2] = WIDTH; // width
-    raw[3] = 0; // width
-    raw[4] = 15; // transparency
-    // color swaps
-    for i in 0u8..8u8 {
-        raw[5 + i as usize] = ((i * 2) << 4) | (i * 2 + 1);
-    }
-
-    let mut byte: u8 = 0;
-    for (y, (row, line)) in lines.enumerate() {
-        if y > 8 {
-            return Err(Err::new(ErrKind::BigImageY, first_row));
-        }
-        let line = line.trim_ascii();
-        if line.is_empty() {
-            break;
-        }
-        for (x, color) in line.split_ascii_whitespace().enumerate() {
-            let color = parse_hex(color, row)?;
-            byte = byte << 4 | (color - 1);
-            if x % 2 == 1 {
-                let idx = HEADER_SIZE + y * 4 + x / 2;
-                raw[idx] = byte;
-            }
-            if x == 9 {
-                return Err(Err::new(ErrKind::BigImageX, row));
-            }
-        }
-    }
-    Ok(raw)
-}
-
-fn parse_hex(s: &str, row: usize) -> Result<u8, Err> {
-    let Some(ch) = s.bytes().next() else {
-        return Err(Err::new(ErrKind::BadHex, row));
-    };
-    if s.len() != 1 {
-        return Err(Err::new(ErrKind::BadHex, row));
-    }
-    if ch.is_ascii_digit() {
-        return Ok(ch - b'0');
-    }
-    if (b'a'..=b'f').contains(&ch) {
-        return Ok(10 + ch - b'a');
-    }
-    if (b'A'..=b'F').contains(&ch) {
-        return Ok(10 + ch - b'A');
-    }
-    if ch == b'.' {
-        return Ok(16);
-    }
-    Err(Err::new(ErrKind::BadHex, row))
-}
-
 fn split_2_args(rest: &str, row: usize) -> Result<(&str, &str), Err> {
     let mut parts = rest.split_ascii_whitespace();
     let x = get_arg(&mut parts, row)?;
@@ -436,6 +395,13 @@ fn parse_cmp(s: &str, row: usize) -> Result<Cmp, Err> {
 }
 
 fn parse_val(s: &str, row: usize) -> Result<i32, Err> {
+    let Ok(val) = s.parse() else {
+        return Err(Err::new(ErrKind::BadCmp, row));
+    };
+    Ok(val)
+}
+
+fn parse_img_coord(s: &str, row: usize) -> Result<u16, Err> {
     let Ok(val) = s.parse() else {
         return Err(Err::new(ErrKind::BadCmp, row));
     };

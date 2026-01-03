@@ -23,15 +23,17 @@ pub struct Room {
 
 #[derive(Debug, Default)]
 pub struct Tile {
-    pub image: Option<ID>,
+    pub image: Option<usize>,
     pub wall: bool,
     pub start: u8,
     pub action: Option<ID>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct Image {
-    pub raw: [u8; 45],
+    pub pos: (u16, u16),
+    pub frames: u8,
+    pub player: (u8, String),
 }
 
 #[derive(Debug, Clone)]

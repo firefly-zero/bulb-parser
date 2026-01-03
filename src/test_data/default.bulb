@@ -24,67 +24,32 @@ START 1
 T C
 IMAGE cat
 WALL 1
-ACTION cat
+A
+SAY Cat: I'm a cat.
+SAY Yes, I can talk.
 
 T K
 IMAGE key
 ACTION key
 
-P idle
-. . . F F . . .
-. . . F F . . .
-. . . F F . . .
-. . F F F F . .
-. F F F F F F .
-F . F F F F . F
-. . F . . F . .
-. . F . . F . .
-
-I bg
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-
-I wall
-2 2 2 2 2 2 2 2
-2 . . . . . . 2
-2 . 2 2 2 2 . 2
-2 . 2 . . 2 . 2
-2 . 2 . . 2 . 2
-2 . 2 2 2 2 . 2
-2 . . . . . . 2
-2 2 2 2 2 2 2 2
-
-I cat
-. . . . . . . .
-. . . . . . . .
-. 2 . 2 . . . 2
-. 2 2 2 . . . 2
-. 2 2 2 . . 2 .
-. 2 2 2 2 2 . .
-. . 2 2 2 2 . .
-. . 2 . . 2 . .
-
-I key
-. . . . . . . .
-. . 2 2 2 2 . .
-. . 2 . . 2 . .
-. . 2 2 2 2 . .
-. . . 2 . . . .
-. . . 2 2 . . .
-. . . 2 . . . .
-. . . 2 2 . . .
-
-A cat
-SAY Cat: I'm a cat.
-SAY Yes, I can talk.
-
 A key
 SAY You found a key!
 ADD key 1
 PLACE .
+
+I player
+POS 0 0
+FRAMES 2
+PLAYER 1 idle
+
+I bg
+POS 0 8
+
+I wall
+POS 8 8
+
+I cat
+POS 8 0
+
+I key
+POS 16 0
