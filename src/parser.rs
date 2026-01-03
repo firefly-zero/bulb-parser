@@ -189,13 +189,13 @@ impl<'a> Parser<'a> {
             let rest = rest.trim_ascii();
             match name {
                 "POS" => {
-                    if img.pos != (0, 0) {
+                    if img.pos.x != 0 && img.pos.y != 0 {
                         return Err(Err::new(ErrKind::DuplicateProperty, row));
                     }
                     let (x, y) = split_2_args(rest, row)?;
                     let x = parse_img_coord(x, row)?;
                     let y = parse_img_coord(y, row)?;
-                    img.pos = (x, y);
+                    img.pos = ImagePos { x, y };
                 }
                 "FRAMES" => {
                     if img.frames != 0 {
@@ -207,14 +207,14 @@ impl<'a> Parser<'a> {
                     img.frames = frames
                 }
                 "PLAYER" => {
-                    if img.player.0 != 0 {
+                    if img.player.is_none() {
                         return Err(Err::new(ErrKind::DuplicateProperty, row));
                     }
                     let (peer, anim) = split_2_args(rest, row)?;
                     let Ok(peer) = peer.parse() else {
                         return Err(Err::new(ErrKind::BadCmp, row));
                     };
-                    img.player = (peer, anim.to_owned());
+                    img.player = Some((peer, anim.to_owned()));
                 }
                 _ => return Err(Err::new(ErrKind::UnknownProperty, row)),
             };
@@ -222,7 +222,7 @@ impl<'a> Parser<'a> {
         if img.frames == 0 {
             img.frames = 1;
         }
-        let is_player = img.player.0 != 0;
+        let is_player = img.player.is_some();
         let image_id = self.images.define(id, img);
         if is_player {
             self.player = Some(image_id);
@@ -408,7 +408,7 @@ fn parse_val(s: &str, row: usize) -> Result<i32, Err> {
     Ok(val)
 }
 
-fn parse_img_coord(s: &str, row: usize) -> Result<u16, Err> {
+fn parse_img_coord(s: &str, row: usize) -> Result<u8, Err> {
     let Ok(val) = s.parse() else {
         return Err(Err::new(ErrKind::BadCmp, row));
     };

@@ -29,11 +29,15 @@ pub struct Tile {
     pub action: Option<ID>,
 }
 
+/// Sub-image of the atlas (sprite in the sprite sheet).
 #[derive(Debug, Clone, Default)]
 pub struct Image {
-    pub pos: (u16, u16),
+    // Upper-left corner of the first animation frame.
+    pub pos: ImagePos,
+    /// The number of animation frames.
+    /// Animation frames are always placed horizontally.
     pub frames: u8,
-    pub player: (u8, String),
+    pub player: Option<(u8, String)>,
 }
 
 #[derive(Debug, Clone)]
@@ -86,6 +90,13 @@ pub enum Cmp {
 #[derive(Debug, Copy, Clone)]
 pub struct Pos {
     pub room: usize,
+    pub x: u8,
+    pub y: u8,
+}
+
+/// Position of an image in the atlas.
+#[derive(Debug, Default, Copy, Clone)]
+pub struct ImagePos {
     pub x: u8,
     pub y: u8,
 }
