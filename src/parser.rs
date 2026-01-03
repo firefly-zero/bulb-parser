@@ -4,6 +4,9 @@ use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
+const TILES_X: usize = 15;
+const TILES_Y: usize = 10;
+
 type Lines<'a> = core::iter::Enumerate<core::str::Lines<'a>>;
 
 pub fn parse(raw: &str) -> Result<Sections, Err> {
@@ -66,18 +69,18 @@ impl<'a> Parser<'a> {
         if self.rooms.is_defined(id) {
             return Err(Err::new(ErrKind::DuplicateRoom, first_row));
         }
-        let mut room: Vec<[usize; 30]> = Vec::with_capacity(20);
+        let mut room: Vec<[usize; TILES_X]> = Vec::with_capacity(TILES_Y);
         for (row, line) in lines {
             let line = line.trim_ascii();
             if line.is_empty() {
                 break;
             }
-            let mut tiles = Vec::with_capacity(30);
+            let mut tiles = Vec::with_capacity(TILES_X);
             for tile_id in line.split_ascii_whitespace() {
                 let tile_id = self.tiles.reference(tile_id, row);
                 tiles.push(tile_id);
             }
-            if tiles.len() < 30 {
+            if tiles.len() < TILES_X {
                 return Err(Err::new(ErrKind::SmallRoomX, row));
             }
             let Ok(tiles) = tiles.try_into() else {
@@ -85,7 +88,7 @@ impl<'a> Parser<'a> {
             };
             room.push(tiles);
         }
-        if room.len() < 20 {
+        if room.len() < TILES_Y {
             return Err(Err::new(ErrKind::SmallRoomY, first_row));
         }
         let Ok(room) = room.try_into() else {
@@ -443,7 +446,7 @@ fn parse_x(s: &str, row: usize) -> Result<u8, Err> {
     let Ok(val) = s.parse() else {
         return Err(Err::new(ErrKind::BadX, row));
     };
-    if val >= 30 {
+    if val >= TILES_X as u8 {
         return Err(Err::new(ErrKind::BadX, row));
     }
     Ok(val)
@@ -453,7 +456,7 @@ fn parse_y(s: &str, row: usize) -> Result<u8, Err> {
     let Ok(val) = s.parse() else {
         return Err(Err::new(ErrKind::BadY, row));
     };
-    if val >= 20 {
+    if val >= TILES_Y as u8 {
         return Err(Err::new(ErrKind::BadY, row));
     }
     Ok(val)

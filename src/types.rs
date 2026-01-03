@@ -18,7 +18,7 @@ pub struct Sections {
 
 #[derive(Debug)]
 pub struct Room {
-    pub tiles: [[ID; 30]; 20],
+    pub tiles: [[ID; 15]; 10],
 }
 
 #[derive(Debug, Default)]
