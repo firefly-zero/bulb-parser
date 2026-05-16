@@ -17,9 +17,6 @@ fn text_tokenize() {
     assert_eq!(t("3==4"), vec![Val(3), Op(Eq), Val(4)]);
     assert_eq!(t("  3 +  4 "), vec![Val(3), Op(Add), Val(4)]);
     assert_eq!(t("3-4"), vec![Val(3), Op(Sub), Val(4)]);
-    assert_eq!(t("(3)"), vec![Paren('('), Val(3), Paren(')')]);
-    assert_eq!(
-        t("(3-4)"),
-        vec![Paren('('), Val(3), Op(Sub), Val(4), Paren(')')]
-    );
+    assert_eq!(t("(3)"), vec![LPar, Val(3), RPar]);
+    assert_eq!(t("(3-4)"), vec![LPar, Val(3), Op(Sub), Val(4), RPar]);
 }

@@ -58,7 +58,8 @@ pub enum BinOp {
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
-    Paren(char),
+    LPar,
+    RPar,
     Op(BinOp),
     Val(i32),
     Var(usize),
@@ -110,79 +111,87 @@ fn parse_node(tokens: &[Token]) -> Option<(Node, &str)> {
 
 pub fn tokenize(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> Option<Vec<Token>> {
     let mut result = Vec::new();
-    let mut it = input.chars().peekable();
-    while let Some(&c) = it.peek() {
+    let mut input = input.as_bytes();
+    while let Some(&c) = input.first() {
         let token = match c {
-            '0'..='9' => {
-                let n = parse_number(&mut it);
+            b'0'..=b'9' => {
+                let (n, shift) = parse_number(&input);
+                if c == b'0' && n != 0 {
+                    return None;
+                }
+                input = &input[shift..];
                 Token::Val(n)
             }
-            '+' => {
-                it.next();
+            b'+' => {
+                input = &input[1..];
                 Token::Op(BinOp::Add)
             }
-            '-' => {
-                it.next();
+            b'-' => {
+                input = &input[1..];
                 Token::Op(BinOp::Sub)
             }
-            '/' => {
-                it.next();
+            b'/' => {
+                input = &input[1..];
                 Token::Op(BinOp::Div)
             }
-            '%' => {
-                it.next();
+            b'%' => {
+                input = &input[1..];
                 Token::Op(BinOp::Mod)
             }
-            '*' => {
-                it.next();
+            b'*' => {
+                input = &input[1..];
                 Token::Op(BinOp::Mul)
             }
-            '<' => {
-                it.next();
-                if it.peek() == Some(&'=') {
-                    it.next();
+            b'<' => {
+                input = &input[1..];
+                if input.first() == Some(&b'=') {
+                    input = &input[1..];
                     Token::Op(BinOp::Lte)
                 } else {
                     Token::Op(BinOp::Lt)
                 }
             }
-            '>' => {
-                it.next();
-                if it.peek() == Some(&'=') {
-                    it.next();
+            b'>' => {
+                input = &input[1..];
+                if input.first() == Some(&b'=') {
+                    input = &input[1..];
                     Token::Op(BinOp::Gte)
                 } else {
                     Token::Op(BinOp::Gt)
                 }
             }
-            '=' => {
-                it.next();
-                if it.peek() == Some(&'=') {
-                    it.next();
+            b'=' => {
+                input = &input[1..];
+                if input.first() == Some(&b'=') {
+                    input = &input[1..];
                     Token::Op(BinOp::Eq)
                 } else {
                     return None;
                 }
             }
-            '!' => {
-                it.next();
-                if it.peek() == Some(&'=') {
-                    it.next();
+            b'!' => {
+                input = &input[1..];
+                if input.first() == Some(&b'=') {
+                    input = &input[1..];
                     Token::Op(BinOp::Ne)
                 } else {
                     return None;
                 }
             }
-            '(' | ')' => {
-                it.next();
-                Token::Paren(c)
+            b'(' => {
+                input = &input[1..];
+                Token::LPar
             }
-            ' ' => {
-                it.next();
+            b')' => {
+                input = &input[1..];
+                Token::RPar
+            }
+            b' ' => {
+                input = &input[1..];
                 continue;
             }
             c if c.is_ascii_alphabetic() => {
-                // let id = parse_id(&mut it);
+                // let id = parse_id(&mut input);
                 // let var = vars.reference(&id, row);
                 // Token::Var(var)
                 Token::Var(0)
@@ -194,18 +203,23 @@ pub fn tokenize(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> Option<
     Some(result)
 }
 
-fn parse_number<T: Iterator<Item = char>>(iter: &mut Peekable<T>) -> i32 {
+fn parse_number(input: &[u8]) -> (i32, usize) {
     let mut number = 0;
-    while let Some(Some(digit)) = iter.peek().map(parse_digit) {
-        number = number * 10 + digit;
-        iter.next();
+    let mut shift = 0;
+    while let Some(c) = input[shift..].first() {
+        if !c.is_ascii_digit() {
+            break;
+        }
+        let digit = *c as u8 - b'0';
+        number = number * 10 + i32::from(digit);
+        shift += 1;
     }
-    number
+    (number, shift)
 }
 
-fn parse_id<T: Iterator<Item = char>>(iter: &mut Peekable<T>) -> String {
-    todo!()
-}
+// fn parse_id<T: Iterator<Item = char>>(iter: &mut Peekable<T>) -> String {
+//     todo!()
+// }
 
 fn parse_digit(c: &char) -> Option<i32> {
     if c.is_ascii_digit() {
