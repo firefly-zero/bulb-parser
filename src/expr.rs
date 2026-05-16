@@ -41,7 +41,8 @@ enum Node {
     BinOp(Box<Node>, BinOp, Box<Node>),
 }
 
-enum BinOp {
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum BinOp {
     Add,
     Sub,
     Div,
@@ -56,9 +57,9 @@ enum BinOp {
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum Token {
+pub enum Token {
     Paren(char),
-    Op(char),
+    Op(BinOp),
     Val(i32),
     Var(usize),
 }
@@ -107,7 +108,7 @@ fn parse_node(tokens: &[Token]) -> Option<(Node, &str)> {
     None
 }
 
-pub(crate) fn tokenize(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> Option<Vec<Token>> {
+pub fn tokenize(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> Option<Vec<Token>> {
     let mut result = Vec::new();
     let mut it = input.chars().peekable();
     while let Some(&c) = it.peek() {
@@ -116,9 +117,61 @@ pub(crate) fn tokenize(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> 
                 let n = parse_number(&mut it);
                 Token::Val(n)
             }
-            '+' | '-' | '*' | '/' => {
+            '+' => {
                 it.next();
-                Token::Op(c)
+                Token::Op(BinOp::Add)
+            }
+            '-' => {
+                it.next();
+                Token::Op(BinOp::Sub)
+            }
+            '/' => {
+                it.next();
+                Token::Op(BinOp::Div)
+            }
+            '%' => {
+                it.next();
+                Token::Op(BinOp::Mod)
+            }
+            '*' => {
+                it.next();
+                Token::Op(BinOp::Mul)
+            }
+            '<' => {
+                it.next();
+                if it.peek() == Some(&'=') {
+                    it.next();
+                    Token::Op(BinOp::Lte)
+                } else {
+                    Token::Op(BinOp::Lt)
+                }
+            }
+            '>' => {
+                it.next();
+                if it.peek() == Some(&'=') {
+                    it.next();
+                    Token::Op(BinOp::Gte)
+                } else {
+                    Token::Op(BinOp::Gt)
+                }
+            }
+            '=' => {
+                it.next();
+                if it.peek() == Some(&'=') {
+                    it.next();
+                    Token::Op(BinOp::Eq)
+                } else {
+                    return None;
+                }
+            }
+            '!' => {
+                it.next();
+                if it.peek() == Some(&'=') {
+                    it.next();
+                    Token::Op(BinOp::Ne)
+                } else {
+                    return None;
+                }
             }
             '(' | ')' => {
                 it.next();
