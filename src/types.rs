@@ -1,7 +1,6 @@
+use crate::expr::Op;
 use alloc::boxed::Box;
 use alloc::string::String;
-
-use crate::Expr;
 
 type ID = usize;
 type Array<T> = Box<[T]>;
@@ -53,9 +52,9 @@ pub enum Action {
     /// Replace the tile at the given position in the current room.
     Place(ID, Option<(u8, u8)>),
     /// If the condition is true, clear the stack and execute a different action.
-    If(Expr, Option<ID>),
+    If(Array<Op>, Option<ID>),
     /// Assign the given value to the variable.
-    Set(ID, Expr),
+    Set(ID, Array<Op>),
     /// Clear the stack and execute the given action set instead.
     Jump(ID),
     Select(Box<[ID]>),

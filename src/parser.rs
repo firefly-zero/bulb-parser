@@ -387,13 +387,6 @@ fn get_arg<'a>(
     Ok(arg)
 }
 
-fn parse_val(s: &str, row: usize) -> Result<i32, Err> {
-    let Ok(val) = s.parse() else {
-        return Err(Err::new(ErrKind::BadCmp, row));
-    };
-    Ok(val)
-}
-
 fn parse_img_coord(s: &str, row: usize) -> Result<u8, Err> {
     let Ok(val) = s.parse() else {
         return Err(Err::new(ErrKind::BadCmp, row));

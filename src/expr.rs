@@ -2,8 +2,6 @@ use crate::entities::Entities;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
-pub type Expr = Vec<Op>;
-
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Op {
     Var(usize),
@@ -72,23 +70,23 @@ pub enum Token {
 
 type R<T> = Result<T, &'static str>;
 
-pub fn parse<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> R<Expr> {
+pub fn parse<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> R<Box<[Op]>> {
     let tokens = tokenize(input, vars, row)?;
     let (root_node, consumed) = parse_expr(&tokens, 0)?;
     if tokens.len() != consumed {
         return Err("expression can only be parsed partially");
     }
-    Ok(flatten(root_node))
+    Ok(flatten(root_node).into_boxed_slice())
 }
 
 /// Converts AST into a flat list of opcodes in postfix (aka reverse Polish) notation.
-pub fn flatten(node: Node) -> Expr {
-    let mut result = Expr::new();
+pub fn flatten(node: Node) -> Vec<Op> {
+    let mut result = Vec::new();
     flatten_into(node, &mut result);
     result
 }
 
-pub fn flatten_into(node: Node, result: &mut Expr) {
+pub fn flatten_into(node: Node, result: &mut Vec<Op>) {
     match node {
         Node::Var(var) => result.push(Op::Var(var)),
         Node::Val(x) => result.push(Op::Val(x)),
@@ -146,15 +144,17 @@ fn parse_term(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
     let Some(c) = tokens.get(pos) else {
         return Err("unexpected end of input, expected a term");
     };
-    match c {
-        Token::Val(n) => Ok((Node::Val(*n), pos + 1)),
-        Token::LPar => parse_expr(tokens, pos + 1).and_then(|(node, next_pos)| {
+    match *c {
+        Token::Val(n) => Ok((Node::Val(n), pos + 1)),
+        Token::Var(name) => Ok((Node::Var(name), pos + 1)),
+        Token::LPar => {
+            let (node, next_pos) = parse_expr(tokens, pos + 1)?;
             if let Some(Token::RPar) = tokens.get(next_pos) {
                 Ok((node, next_pos + 1))
             } else {
                 Err("matching closing parenthesis not found")
             }
-        }),
+        }
         _ => Err("unexpected token, expected a term"),
     }
 }

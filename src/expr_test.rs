@@ -50,7 +50,7 @@ fn test_flatten() {
 fn test_parse() {
     fn p(s: &str) -> Vec<Op> {
         let mut vars = Entities::new();
-        parse(s, &mut vars, 0).unwrap()
+        parse(s, &mut vars, 0).unwrap().into_vec()
     }
     use Op::*;
     assert_eq!(p("1"), vec![Val(1)]);

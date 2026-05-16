@@ -13,7 +13,7 @@ mod state;
 mod types;
 
 pub use error::*;
-pub use expr::Expr;
+pub use expr::Op;
 pub use parser::*;
 pub use state::*;
 pub use types::*;
