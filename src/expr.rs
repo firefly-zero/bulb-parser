@@ -1,11 +1,9 @@
 use crate::entities::Entities;
 use alloc::boxed::Box;
 use alloc::collections::VecDeque;
-use alloc::string::String;
-use alloc::vec;
 use alloc::vec::Vec;
-use core::iter::Peekable;
 
+#[derive(Debug, PartialEq)]
 pub enum Op {
     Var(usize),
     /// `0`: Integer value.
@@ -65,15 +63,16 @@ pub enum Token {
     Var(usize),
 }
 
-pub fn parse_expr<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> Option<Vec<Op>> {
+pub fn parse<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> Option<Vec<Op>> {
     let tokens = tokenize(input, vars, row)?;
-    let (root_node, rest) = parse_node(&tokens)?;
-    if !rest.is_empty() {
+    let (root_node, consumed) = parse_expr(&tokens, 0)?;
+    if input.len() != consumed {
         return None;
     }
     Some(flatten(root_node))
 }
 
+/// Converts AST into a flat list of opcodes in Polish notation.
 fn flatten(root_node: Node) -> Vec<Op> {
     let mut result = Vec::new();
     let mut queue = VecDeque::<Node>::new();
@@ -105,10 +104,54 @@ fn flatten(root_node: Node) -> Vec<Op> {
     result
 }
 
-fn parse_node(tokens: &[Token]) -> Option<(Node, &str)> {
-    None
+fn parse_expr(tokens: &[Token], pos: usize) -> Option<(Node, usize)> {
+    let (node_summand, next_pos) = parse_summand(tokens, pos)?;
+    let c = tokens.get(next_pos);
+    match c {
+        Some(&Token::Op(op)) if op == BinOp::Add || op == BinOp::Sub => {
+            let (rhs, i) = parse_expr(tokens, next_pos + 1)?;
+            let node = Node::BinOp(Box::new(node_summand), op, Box::new(rhs));
+            Some((node, i))
+        }
+        _ => Some((node_summand, next_pos)),
+    }
 }
 
+fn parse_summand(tokens: &[Token], pos: usize) -> Option<(Node, usize)> {
+    let (node_term, next_pos) = parse_term(tokens, pos)?;
+    let c = tokens.get(next_pos);
+    let Some(c) = c else {
+        return Some((node_term, next_pos));
+    };
+    match *c {
+        Token::Op(op) if op == BinOp::Mul || op == BinOp::Div || op == BinOp::Mod => {
+            let (rhs, i) = parse_summand(tokens, next_pos + 1)?;
+            let node = Node::BinOp(Box::new(node_term), op, Box::new(rhs));
+            Some((node, i))
+        }
+        _ => Some((node_term, next_pos)),
+    }
+}
+
+fn parse_term(tokens: &[Token], pos: usize) -> Option<(Node, usize)> {
+    let c = tokens.get(pos)?;
+    match c {
+        Token::Val(n) => Some((Node::Val(*n), pos + 1)),
+        Token::LPar => parse_expr(tokens, pos + 1).and_then(|(node, next_pos)| {
+            if let Some(Token::RPar) = tokens.get(next_pos) {
+                Some((node, next_pos + 1))
+            } else {
+                None
+            }
+        }),
+        _ => None,
+    }
+}
+
+/// Convert expression source code string into a list of tokens.
+///
+/// Variables are resolved into references.
+/// Invalid input may define some references.
 pub fn tokenize<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> Option<Vec<Token>> {
     let mut result = Vec::new();
     let mut input = input.as_bytes();
