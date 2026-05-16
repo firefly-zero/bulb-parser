@@ -65,7 +65,7 @@ pub enum Token {
     Var(usize),
 }
 
-pub fn parse_expr(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> Option<Vec<Op>> {
+pub fn parse_expr<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> Option<Vec<Op>> {
     let tokens = tokenize(input, vars, row)?;
     let (root_node, rest) = parse_node(&tokens)?;
     if !rest.is_empty() {
@@ -109,13 +109,13 @@ fn parse_node(tokens: &[Token]) -> Option<(Node, &str)> {
     None
 }
 
-pub fn tokenize(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> Option<Vec<Token>> {
+pub fn tokenize<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> Option<Vec<Token>> {
     let mut result = Vec::new();
     let mut input = input.as_bytes();
     while let Some(&c) = input.first() {
         let token = match c {
             b'0'..=b'9' => {
-                let (n, shift) = parse_number(&input);
+                let (n, shift) = parse_number(input);
                 if c == b'0' && n != 0 {
                     return None;
                 }
@@ -191,16 +191,29 @@ pub fn tokenize(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> Option<
                 continue;
             }
             c if c.is_ascii_alphabetic() => {
-                // let id = parse_id(&mut input);
-                // let var = vars.reference(&id, row);
-                // Token::Var(var)
-                Token::Var(0)
+                let shift = parse_id(input);
+                let id = &input[..shift];
+                let id = unsafe { str::from_utf8_unchecked(id) };
+                input = &input[shift..];
+                let var = vars.reference(id, row);
+                Token::Var(var)
             }
             _ => return None,
         };
         result.push(token);
     }
     Some(result)
+}
+
+fn parse_id(input: &[u8]) -> usize {
+    let mut shift = 0;
+    while let Some(c) = input[shift..].first() {
+        if !c.is_ascii_alphanumeric() {
+            break;
+        }
+        shift += 1;
+    }
+    shift
 }
 
 fn parse_number(input: &[u8]) -> (i32, usize) {
@@ -210,21 +223,9 @@ fn parse_number(input: &[u8]) -> (i32, usize) {
         if !c.is_ascii_digit() {
             break;
         }
-        let digit = *c as u8 - b'0';
+        let digit = *c - b'0';
         number = number * 10 + i32::from(digit);
         shift += 1;
     }
     (number, shift)
-}
-
-// fn parse_id<T: Iterator<Item = char>>(iter: &mut Peekable<T>) -> String {
-//     todo!()
-// }
-
-fn parse_digit(c: &char) -> Option<i32> {
-    if c.is_ascii_digit() {
-        let n = *c as u8 - b'0';
-        return Some(n.into());
-    }
-    None
 }
