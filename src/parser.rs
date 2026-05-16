@@ -12,10 +12,7 @@ type Lines<'a> = core::iter::Enumerate<core::str::Lines<'a>>;
 pub fn parse(raw: &str) -> Result<Sections, Err> {
     let mut parser = Parser::new();
     let mut lines = raw.lines().enumerate();
-    loop {
-        let Some((row, line)) = lines.next() else {
-            break; // End of file.
-        };
+    while let Some((row, line)) = lines.next() {
         let line = line.trim_ascii();
         let mut chars = line.chars();
         let Some(kind) = chars.next() else {

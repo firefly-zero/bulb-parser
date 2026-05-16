@@ -3,6 +3,7 @@ extern crate alloc;
 
 mod entities;
 mod error;
+mod expr;
 mod parser;
 #[cfg(test)]
 mod parser_test;
