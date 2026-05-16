@@ -1,8 +1,10 @@
 use crate::entities::Entities;
 use alloc::boxed::Box;
 use alloc::collections::VecDeque;
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
+use core::iter::Peekable;
 
 pub enum Op {
     Var(usize),
@@ -33,10 +35,10 @@ pub enum Op {
     Ne,
 }
 
-enum Node<'a> {
-    Var(&'a str),
+enum Node {
+    Var(usize),
     Val(i32),
-    BinOp(Box<Node<'a>>, BinOp, Box<Node<'a>>),
+    BinOp(Box<Node>, BinOp, Box<Node>),
 }
 
 enum BinOp {
@@ -53,8 +55,20 @@ enum BinOp {
     Ne,
 }
 
-pub fn parse_expr(vars: Entities<'_, ()>, raw: &str) -> Option<Vec<Op>> {
-    let root_node = parse_node(raw)?;
+#[derive(Debug, PartialEq)]
+pub(crate) enum Token {
+    Paren(char),
+    Op(char),
+    Val(i32),
+    Var(usize),
+}
+
+pub fn parse_expr(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> Option<Vec<Op>> {
+    let tokens = tokenize(input, vars, row)?;
+    let (root_node, rest) = parse_node(&tokens)?;
+    if !rest.is_empty() {
+        return None;
+    }
     Some(flatten(root_node))
 }
 
@@ -89,9 +103,60 @@ fn flatten(root_node: Node) -> Vec<Op> {
     result
 }
 
-fn parse_node(raw: &str) -> Option<Node<'_>> {
-    if let Ok(val) = raw.parse::<i32>() {
-        return Some(Node::Val(val));
-    };
+fn parse_node(tokens: &[Token]) -> Option<(Node, &str)> {
+    None
+}
+
+pub(crate) fn tokenize(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> Option<Vec<Token>> {
+    let mut result = Vec::new();
+    let mut it = input.chars().peekable();
+    while let Some(&c) = it.peek() {
+        match c {
+            '0'..='9' => {
+                it.next();
+                let n = parse_number(c, &mut it);
+                result.push(Token::Val(n));
+            }
+            '+' | '-' | '*' | '/' => {
+                result.push(Token::Op(c));
+                it.next();
+            }
+            '(' | ')' => {
+                result.push(Token::Paren(c));
+                it.next();
+            }
+            ' ' => {
+                it.next();
+            }
+            c if c.is_ascii_alphabetic() => {
+                let id = parse_id(c, &mut it);
+                // let var = vars.reference(&id, row);
+                // result.push(Token::Var(var));
+                it.next();
+            }
+            _ => return None,
+        }
+    }
+    Some(result)
+}
+
+fn parse_number<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> i32 {
+    let mut number = parse_digit(&c).unwrap();
+    while let Some(Some(digit)) = iter.peek().map(parse_digit) {
+        number = number * 10 + digit;
+        iter.next();
+    }
+    number
+}
+
+fn parse_id<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> String {
+    todo!()
+}
+
+fn parse_digit(c: &char) -> Option<i32> {
+    if c.is_ascii_digit() {
+        let n = *c as u8 - b'0';
+        return Some(n.into());
+    }
     None
 }

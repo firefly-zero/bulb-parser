@@ -4,6 +4,8 @@ extern crate alloc;
 mod entities;
 mod error;
 mod expr;
+#[cfg(test)]
+mod expr_test;
 mod parser;
 #[cfg(test)]
 mod parser_test;
