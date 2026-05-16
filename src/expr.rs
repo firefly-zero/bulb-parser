@@ -63,23 +63,25 @@ pub enum Token {
     Var(usize),
 }
 
-pub fn parse<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> Option<Vec<Op>> {
+type R<T> = Result<T, &'static str>;
+
+pub fn parse<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> R<Vec<Op>> {
     let tokens = tokenize(input, vars, row)?;
     let (root_node, consumed) = parse_expr(&tokens, 0)?;
-    if input.len() != consumed {
-        return None;
+    if tokens.len() != consumed {
+        return Err("expression can only be parsed partially");
     }
-    Some(flatten(root_node))
+    Ok(flatten(root_node))
 }
 
-/// Converts AST into a flat list of opcodes in Polish notation.
+/// Converts AST into a flat list of opcodes in postfix (aka reverse Polish) notation.
 fn flatten(root_node: Node) -> Vec<Op> {
     let mut result = Vec::new();
     let mut queue = VecDeque::<Node>::new();
     queue.push_back(root_node);
     while let Some(node) = queue.pop_front() {
         match node {
-            Node::Var(_) => todo!(),
+            Node::Var(var) => result.push(Op::Var(var)),
             Node::Val(x) => result.push(Op::Val(x)),
             Node::BinOp(lhs, op, rhs) => {
                 let op = match op {
@@ -96,55 +98,58 @@ fn flatten(root_node: Node) -> Vec<Op> {
                     BinOp::Ne => Op::Ne,
                 };
                 result.push(op);
-                queue.push_back(*lhs);
                 queue.push_back(*rhs);
+                queue.push_back(*lhs);
             }
         }
     }
+    result.reverse();
     result
 }
 
-fn parse_expr(tokens: &[Token], pos: usize) -> Option<(Node, usize)> {
+fn parse_expr(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
     let (node_summand, next_pos) = parse_summand(tokens, pos)?;
     let c = tokens.get(next_pos);
     match c {
         Some(&Token::Op(op)) if op == BinOp::Add || op == BinOp::Sub => {
             let (rhs, i) = parse_expr(tokens, next_pos + 1)?;
             let node = Node::BinOp(Box::new(node_summand), op, Box::new(rhs));
-            Some((node, i))
+            Ok((node, i))
         }
-        _ => Some((node_summand, next_pos)),
+        _ => Ok((node_summand, next_pos)),
     }
 }
 
-fn parse_summand(tokens: &[Token], pos: usize) -> Option<(Node, usize)> {
+fn parse_summand(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
     let (node_term, next_pos) = parse_term(tokens, pos)?;
     let c = tokens.get(next_pos);
     let Some(c) = c else {
-        return Some((node_term, next_pos));
+        return Ok((node_term, next_pos));
     };
     match *c {
         Token::Op(op) if op == BinOp::Mul || op == BinOp::Div || op == BinOp::Mod => {
             let (rhs, i) = parse_summand(tokens, next_pos + 1)?;
             let node = Node::BinOp(Box::new(node_term), op, Box::new(rhs));
-            Some((node, i))
+            Ok((node, i))
         }
-        _ => Some((node_term, next_pos)),
+        _ => Ok((node_term, next_pos)),
     }
 }
 
-fn parse_term(tokens: &[Token], pos: usize) -> Option<(Node, usize)> {
-    let c = tokens.get(pos)?;
+fn parse_term(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
+    let Some(c) = tokens.get(pos) else {
+        return Err("unexpected end of input, expected a term");
+    };
     match c {
-        Token::Val(n) => Some((Node::Val(*n), pos + 1)),
+        Token::Val(n) => Ok((Node::Val(*n), pos + 1)),
         Token::LPar => parse_expr(tokens, pos + 1).and_then(|(node, next_pos)| {
             if let Some(Token::RPar) = tokens.get(next_pos) {
-                Some((node, next_pos + 1))
+                Ok((node, next_pos + 1))
             } else {
-                None
+                Err("matching closing parenthesis not found")
             }
         }),
-        _ => None,
+        _ => Err("unexpected token, expected a term"),
     }
 }
 
@@ -152,7 +157,7 @@ fn parse_term(tokens: &[Token], pos: usize) -> Option<(Node, usize)> {
 ///
 /// Variables are resolved into references.
 /// Invalid input may define some references.
-pub fn tokenize<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> Option<Vec<Token>> {
+pub fn tokenize<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> R<Vec<Token>> {
     let mut result = Vec::new();
     let mut input = input.as_bytes();
     while let Some(&c) = input.first() {
@@ -160,7 +165,7 @@ pub fn tokenize<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> 
             b'0'..=b'9' => {
                 let (n, shift) = parse_number(input);
                 if c == b'0' && n != 0 {
-                    return None;
+                    return Err("an integer cannot start with zero");
                 }
                 input = &input[shift..];
                 Token::Val(n)
@@ -209,7 +214,7 @@ pub fn tokenize<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> 
                     input = &input[1..];
                     Token::Op(BinOp::Eq)
                 } else {
-                    return None;
+                    return Err("equality must have two equal signs");
                 }
             }
             b'!' => {
@@ -218,7 +223,7 @@ pub fn tokenize<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> 
                     input = &input[1..];
                     Token::Op(BinOp::Ne)
                 } else {
-                    return None;
+                    return Err("invalid token '!'; did you mean '!='?");
                 }
             }
             b'(' => {
@@ -241,11 +246,11 @@ pub fn tokenize<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> 
                 let var = vars.reference(id, row);
                 Token::Var(var)
             }
-            _ => return None,
+            _ => return Err("invalid token"),
         };
         result.push(token);
     }
-    Some(result)
+    Ok(result)
 }
 
 fn parse_id(input: &[u8]) -> usize {

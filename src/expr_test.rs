@@ -30,8 +30,8 @@ fn test_tokenize() {
     assert_eq!(t("x+y"), vec![Var(0), Op(Add), Var(1)]);
 
     let mut vars = Entities::new();
-    assert!(tokenize("01", &mut vars, 0).is_none());
-    assert!(tokenize("?", &mut vars, 0).is_none());
+    assert!(tokenize("01", &mut vars, 0).is_err());
+    assert!(tokenize("?", &mut vars, 0).is_err());
 }
 
 #[test]
@@ -40,9 +40,11 @@ fn test_parse() {
         let mut vars = Entities::new();
         parse(s, &mut vars, 0).unwrap()
     }
-    assert_eq!(p("1"), vec![Op::Val(1)]);
-    assert_eq!(p("1+2"), vec![Op::Add, Op::Val(1), Op::Val(2)]);
-    // assert_eq!(p("13+14"), vec![Op::Add, Op::Val(13), Op::Val(14)]);
-    // assert_eq!(p("13+14"), vec![Op::Add, Op::Val(13), Op::Val(14)]);
-    // assert_eq!(p("13-14"), vec![Op::Sub, Op::Val(13), Op::Val(14)]);
+    use Op::*;
+    assert_eq!(p("1"), vec![Val(1)]);
+    assert_eq!(p("1+2"), vec![Val(1), Val(2), Add]);
+    assert_eq!(p("13+14"), vec![Val(13), Val(14), Add]);
+    assert_eq!(p("13-14"), vec![Val(13), Val(14), Sub]);
+    assert_eq!(p("2*7"), vec![Val(2), Val(7), Mul]);
+    assert_eq!(p("2*7+3"), vec![Val(2), Val(7), Mul, Val(3), Add]);
 }
