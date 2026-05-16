@@ -35,6 +35,18 @@ fn test_tokenize() {
 }
 
 #[test]
+fn test_flatten() {
+    use Op::*;
+    let ops = flatten(Node::Val(3));
+    assert_eq!(ops, vec![Val(3)]);
+    let ops = flatten(Node::op(Node::Val(3), BinOp::Add, Node::Val(4)));
+    assert_eq!(ops, vec![Val(3), Val(4), Add]);
+    let mul = Node::op(Node::Val(2), BinOp::Mul, Node::Val(7));
+    let ops = flatten(Node::op(Node::Val(3), BinOp::Add, mul));
+    assert_eq!(ops, vec![Val(3), Val(2), Val(7), Mul, Add]);
+}
+
+#[test]
 fn test_parse() {
     fn p(s: &str) -> Vec<Op> {
         let mut vars = Entities::new();
@@ -47,4 +59,5 @@ fn test_parse() {
     assert_eq!(p("13-14"), vec![Val(13), Val(14), Sub]);
     assert_eq!(p("2*7"), vec![Val(2), Val(7), Mul]);
     assert_eq!(p("2*7+3"), vec![Val(2), Val(7), Mul, Val(3), Add]);
+    assert_eq!(p("3+2*7"), vec![Val(3), Val(2), Val(7), Mul, Add]);
 }

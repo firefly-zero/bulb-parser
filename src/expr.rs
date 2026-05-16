@@ -1,6 +1,5 @@
 use crate::entities::Entities;
 use alloc::boxed::Box;
-use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 
 #[derive(Debug, PartialEq)]
@@ -33,10 +32,16 @@ pub enum Op {
     Ne,
 }
 
-enum Node {
+pub enum Node {
     Var(usize),
     Val(i32),
     BinOp(Box<Node>, BinOp, Box<Node>),
+}
+
+impl Node {
+    pub fn op(lhs: Node, op: BinOp, rhs: Node) -> Self {
+        Self::BinOp(Box::new(lhs), op, Box::new(rhs))
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -75,36 +80,35 @@ pub fn parse<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> R<V
 }
 
 /// Converts AST into a flat list of opcodes in postfix (aka reverse Polish) notation.
-fn flatten(root_node: Node) -> Vec<Op> {
+pub fn flatten(node: Node) -> Vec<Op> {
     let mut result = Vec::new();
-    let mut queue = VecDeque::<Node>::new();
-    queue.push_back(root_node);
-    while let Some(node) = queue.pop_front() {
-        match node {
-            Node::Var(var) => result.push(Op::Var(var)),
-            Node::Val(x) => result.push(Op::Val(x)),
-            Node::BinOp(lhs, op, rhs) => {
-                let op = match op {
-                    BinOp::Add => Op::Add,
-                    BinOp::Sub => Op::Sub,
-                    BinOp::Div => Op::Div,
-                    BinOp::Mod => Op::Mod,
-                    BinOp::Mul => Op::Mul,
-                    BinOp::Lt => Op::Lt,
-                    BinOp::Lte => Op::Lte,
-                    BinOp::Gt => Op::Gt,
-                    BinOp::Gte => Op::Gte,
-                    BinOp::Eq => Op::Eq,
-                    BinOp::Ne => Op::Ne,
-                };
-                result.push(op);
-                queue.push_back(*rhs);
-                queue.push_back(*lhs);
-            }
+    flatten_into(node, &mut result);
+    result
+}
+
+pub fn flatten_into(node: Node, result: &mut Vec<Op>) {
+    match node {
+        Node::Var(var) => result.push(Op::Var(var)),
+        Node::Val(x) => result.push(Op::Val(x)),
+        Node::BinOp(lhs, op, rhs) => {
+            flatten_into(*lhs, result);
+            flatten_into(*rhs, result);
+            let op = match op {
+                BinOp::Add => Op::Add,
+                BinOp::Sub => Op::Sub,
+                BinOp::Div => Op::Div,
+                BinOp::Mod => Op::Mod,
+                BinOp::Mul => Op::Mul,
+                BinOp::Lt => Op::Lt,
+                BinOp::Lte => Op::Lte,
+                BinOp::Gt => Op::Gt,
+                BinOp::Gte => Op::Gte,
+                BinOp::Eq => Op::Eq,
+                BinOp::Ne => Op::Ne,
+            };
+            result.push(op);
         }
     }
-    result.reverse();
-    result
 }
 
 fn parse_expr(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
@@ -113,7 +117,7 @@ fn parse_expr(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
     match c {
         Some(&Token::Op(op)) if op == BinOp::Add || op == BinOp::Sub => {
             let (rhs, i) = parse_expr(tokens, next_pos + 1)?;
-            let node = Node::BinOp(Box::new(node_summand), op, Box::new(rhs));
+            let node = Node::op(node_summand, op, rhs);
             Ok((node, i))
         }
         _ => Ok((node_summand, next_pos)),
@@ -129,7 +133,7 @@ fn parse_summand(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
     match *c {
         Token::Op(op) if op == BinOp::Mul || op == BinOp::Div || op == BinOp::Mod => {
             let (rhs, i) = parse_summand(tokens, next_pos + 1)?;
-            let node = Node::BinOp(Box::new(node_term), op, Box::new(rhs));
+            let node = Node::op(node_term, op, rhs);
             Ok((node, i))
         }
         _ => Ok((node_term, next_pos)),
