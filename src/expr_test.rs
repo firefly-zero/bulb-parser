@@ -60,4 +60,10 @@ fn test_parse() {
     assert_eq!(p("2*7"), vec![Val(2), Val(7), Mul]);
     assert_eq!(p("2*7+3"), vec![Val(2), Val(7), Mul, Val(3), Add]);
     assert_eq!(p("3+2*7"), vec![Val(3), Val(2), Val(7), Mul, Add]);
+    assert_eq!(p("4-5-6"), vec![Val(4), Val(5), Val(6), Sub, Sub]);
+    assert_eq!(p("3>7"), vec![Val(3), Val(7), Gt]);
+    assert_eq!(
+        p("3+2>7+1"),
+        vec![Val(3), Val(2), Add, Val(7), Val(1), Add, Gt]
+    );
 }

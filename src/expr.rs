@@ -72,7 +72,7 @@ type R<T> = Result<T, &'static str>;
 
 pub fn parse<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> R<Box<[Op]>> {
     let tokens = tokenize(input, vars, row)?;
-    let (root_node, consumed) = parse_expr(&tokens, 0)?;
+    let (root_node, consumed) = parse_cmp(&tokens, 0)?;
     if tokens.len() != consumed {
         return Err("expression can only be parsed partially");
     }
@@ -111,32 +111,53 @@ pub fn flatten_into(node: Node, result: &mut Vec<Op>) {
     }
 }
 
-fn parse_expr(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
-    let (node_summand, next_pos) = parse_summand(tokens, pos)?;
+fn parse_cmp(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
+    let (subnode, next_pos) = parse_mul(tokens, pos)?;
     let c = tokens.get(next_pos);
-    match c {
-        Some(&Token::Op(op)) if op == BinOp::Add || op == BinOp::Sub => {
-            let (rhs, i) = parse_expr(tokens, next_pos + 1)?;
-            let node = Node::op(node_summand, op, rhs);
+    let Some(c) = c else {
+        return Ok((subnode, next_pos));
+    };
+    match *c {
+        Token::Op(
+            op @ (BinOp::Lt | BinOp::Lte | BinOp::Gt | BinOp::Gte | BinOp::Eq | BinOp::Ne),
+        ) => {
+            let (rhs, i) = parse_cmp(tokens, next_pos + 1)?;
+            let node = Node::op(subnode, op, rhs);
             Ok((node, i))
         }
-        _ => Ok((node_summand, next_pos)),
+        _ => Ok((subnode, next_pos)),
+    }
+}
+
+fn parse_mul(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
+    let (subnode, next_pos) = parse_summand(tokens, pos)?;
+    let c = tokens.get(next_pos);
+    let Some(c) = c else {
+        return Ok((subnode, next_pos));
+    };
+    match *c {
+        Token::Op(op @ (BinOp::Add | BinOp::Sub)) => {
+            let (rhs, i) = parse_mul(tokens, next_pos + 1)?;
+            let node = Node::op(subnode, op, rhs);
+            Ok((node, i))
+        }
+        _ => Ok((subnode, next_pos)),
     }
 }
 
 fn parse_summand(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
-    let (node_term, next_pos) = parse_term(tokens, pos)?;
+    let (subnode, next_pos) = parse_term(tokens, pos)?;
     let c = tokens.get(next_pos);
     let Some(c) = c else {
-        return Ok((node_term, next_pos));
+        return Ok((subnode, next_pos));
     };
     match *c {
-        Token::Op(op) if op == BinOp::Mul || op == BinOp::Div || op == BinOp::Mod => {
+        Token::Op(op @ (BinOp::Mul | BinOp::Div | BinOp::Mod)) => {
             let (rhs, i) = parse_summand(tokens, next_pos + 1)?;
-            let node = Node::op(node_term, op, rhs);
+            let node = Node::op(subnode, op, rhs);
             Ok((node, i))
         }
-        _ => Ok((node_term, next_pos)),
+        _ => Ok((subnode, next_pos)),
     }
 }
 
@@ -148,7 +169,7 @@ fn parse_term(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
         Token::Val(n) => Ok((Node::Val(n), pos + 1)),
         Token::Var(name) => Ok((Node::Var(name), pos + 1)),
         Token::LPar => {
-            let (node, next_pos) = parse_expr(tokens, pos + 1)?;
+            let (node, next_pos) = parse_mul(tokens, pos + 1)?;
             if let Some(Token::RPar) = tokens.get(next_pos) {
                 Ok((node, next_pos + 1))
             } else {
