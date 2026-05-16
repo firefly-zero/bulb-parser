@@ -299,16 +299,16 @@ impl<'a> Parser<'a> {
                     Action::If(ops, dest)
                 }
                 "SET" => {
-                    let (var_id, val) = split_2_args(rest, row)?;
+                    let rest = rest.trim_ascii_start();
+                    let Some((var_id, val)) = rest.split_once(' ') else {
+                        return Err(Err::new(ErrKind::NotEnoughArgs, row));
+                    };
                     let var_id = self.vars.reference(var_id, row);
-                    let val = parse_val(val, row)?;
+                    let val = match expr::parse(val, &mut self.vars, row) {
+                        Ok(ops) => ops,
+                        Result::Err(_) => return Err(Err::new(ErrKind::BadExpr, row)),
+                    };
                     Action::Set(var_id, val)
-                }
-                "ADD" => {
-                    let (var_id, val) = split_2_args(rest, row)?;
-                    let var_id = self.vars.reference(var_id, row);
-                    let val = parse_val(val, row)?;
-                    Action::Add(var_id, val)
                 }
                 "JUMP" => {
                     let action_id = self.actions.reference(rest, row);

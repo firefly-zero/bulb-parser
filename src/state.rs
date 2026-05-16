@@ -80,8 +80,9 @@ impl State {
                     }
                 }
             }
-            Action::Set(id, val) => self.vars[*id] = *val,
-            Action::Add(id, val) => self.vars[*id] += val,
+            Action::Set(id, expr) => {
+                self.vars[*id] = self.eval_expr(expr).unwrap_or_default();
+            }
             Action::Select(ids) => {
                 self.seed = get_random(self.seed);
                 let idx = self.seed as usize % ids.len();

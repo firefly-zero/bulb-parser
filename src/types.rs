@@ -55,11 +55,7 @@ pub enum Action {
     /// If the condition is true, clear the stack and execute a different action.
     If(Expr, Option<ID>),
     /// Assign the given value to the variable.
-    Set(ID, i32),
-    /// Add the given value to the variable.
-    ///
-    /// Negative values can be used to substract.
-    Add(ID, i32),
+    Set(ID, Expr),
     /// Clear the stack and execute the given action set instead.
     Jump(ID),
     Select(Box<[ID]>),
