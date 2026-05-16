@@ -111,37 +111,38 @@ pub(crate) fn tokenize(input: &str, vars: &mut Entities<'_, ()>, row: usize) -> 
     let mut result = Vec::new();
     let mut it = input.chars().peekable();
     while let Some(&c) = it.peek() {
-        match c {
+        let token = match c {
             '0'..='9' => {
-                it.next();
-                let n = parse_number(c, &mut it);
-                result.push(Token::Val(n));
+                let n = parse_number(&mut it);
+                Token::Val(n)
             }
             '+' | '-' | '*' | '/' => {
-                result.push(Token::Op(c));
                 it.next();
+                Token::Op(c)
             }
             '(' | ')' => {
-                result.push(Token::Paren(c));
                 it.next();
+                Token::Paren(c)
             }
             ' ' => {
                 it.next();
+                continue;
             }
             c if c.is_ascii_alphabetic() => {
-                let id = parse_id(c, &mut it);
+                // let id = parse_id(&mut it);
                 // let var = vars.reference(&id, row);
-                // result.push(Token::Var(var));
-                it.next();
+                // Token::Var(var)
+                Token::Var(0)
             }
             _ => return None,
-        }
+        };
+        result.push(token);
     }
     Some(result)
 }
 
-fn parse_number<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> i32 {
-    let mut number = parse_digit(&c).unwrap();
+fn parse_number<T: Iterator<Item = char>>(iter: &mut Peekable<T>) -> i32 {
+    let mut number = 0;
     while let Some(Some(digit)) = iter.peek().map(parse_digit) {
         number = number * 10 + digit;
         iter.next();
@@ -149,7 +150,7 @@ fn parse_number<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> i3
     number
 }
 
-fn parse_id<T: Iterator<Item = char>>(c: char, iter: &mut Peekable<T>) -> String {
+fn parse_id<T: Iterator<Item = char>>(iter: &mut Peekable<T>) -> String {
     todo!()
 }
 
