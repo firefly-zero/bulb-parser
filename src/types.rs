@@ -1,6 +1,8 @@
 use alloc::boxed::Box;
 use alloc::string::String;
 
+use crate::Expr;
+
 type ID = usize;
 type Array<T> = Box<[T]>;
 
@@ -51,7 +53,7 @@ pub enum Action {
     /// Replace the tile at the given position in the current room.
     Place(ID, Option<(u8, u8)>),
     /// If the condition is true, clear the stack and execute a different action.
-    If(Cond, Option<ID>),
+    If(Expr, Option<ID>),
     /// Assign the given value to the variable.
     Set(ID, i32),
     /// Add the given value to the variable.
@@ -61,30 +63,6 @@ pub enum Action {
     /// Clear the stack and execute the given action set instead.
     Jump(ID),
     Select(Box<[ID]>),
-}
-
-#[derive(Debug, Clone)]
-pub struct Cond {
-    pub lhs: ID,
-    pub cmp: Cmp,
-    pub rhs: i32,
-}
-
-/// Comparison operator.
-#[derive(Debug, Clone)]
-pub enum Cmp {
-    /// `<`: Less than.
-    Lt,
-    /// `<=`: Less than or equal.
-    Lte,
-    /// `>`: Greater than.
-    Gt,
-    /// `>=`: Greater than or equal.
-    Gte,
-    /// `==`: Equal.
-    Eq,
-    /// `!=`: Not equal.
-    Ne,
 }
 
 #[derive(Debug, Copy, Clone)]

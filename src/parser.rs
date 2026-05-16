@@ -277,24 +277,26 @@ impl<'a> Parser<'a> {
                     }
                 }
                 "IF" => {
-                    let mut parts = rest.split_ascii_whitespace();
-                    let lhs = get_arg(&mut parts, row)?;
-                    let cmp = get_arg(&mut parts, row)?;
-                    let rhs = get_arg(&mut parts, row)?;
-                    let sep = get_arg(&mut parts, row)?;
-                    let id = match sep {
-                        "JUMP" => {
-                            let id = get_arg(&mut parts, row)?;
-                            Some(self.actions.reference(id, row))
+                    let (test, dest) = match rest.split_once("JUMP") {
+                        Some((_, "")) => {
+                            return Err(Err::new(ErrKind::NotEnoughArgs, row));
                         }
-                        "BREAK" => None,
-                        _ => return Err(Err::new(ErrKind::NoJump, row)),
+                        Some((prefix, id)) => {
+                            let id = id.trim_ascii();
+                            let dest = Some(self.actions.reference(id, row));
+                            (prefix, dest)
+                        }
+                        None => match rest.split_once("BREAK") {
+                            Some((prefix, "")) => (prefix, None),
+                            Some(_) => return Err(Err::new(ErrKind::TooManyArgs, row)),
+                            None => return Err(Err::new(ErrKind::NoJump, row)),
+                        },
                     };
-                    let lhs = self.vars.reference(lhs, row);
-                    let cmp = parse_cmp(cmp, row)?;
-                    let rhs = parse_val(rhs, row)?;
-                    let cond = Cond { lhs, cmp, rhs };
-                    Action::If(cond, id)
+                    let ops = match expr::parse(test, &mut self.vars, row) {
+                        Ok(ops) => ops,
+                        Result::Err(_) => return Err(Err::new(ErrKind::BadExpr, row)),
+                    };
+                    Action::If(ops, dest)
                 }
                 "SET" => {
                     let (var_id, val) = split_2_args(rest, row)?;
@@ -383,19 +385,6 @@ fn get_arg<'a>(
         return Err(Err::new(ErrKind::NotEnoughArgs, row));
     };
     Ok(arg)
-}
-
-fn parse_cmp(s: &str, row: usize) -> Result<Cmp, Err> {
-    let cmp = match s {
-        ">" => Cmp::Gt,
-        ">=" => Cmp::Gte,
-        "<" => Cmp::Lt,
-        "<=" => Cmp::Lte,
-        "==" | "=" => Cmp::Eq,
-        "!=" | "<>" => Cmp::Ne,
-        _ => return Err(Err::new(ErrKind::BadCmp, row)),
-    };
-    Ok(cmp)
 }
 
 fn parse_val(s: &str, row: usize) -> Result<i32, Err> {

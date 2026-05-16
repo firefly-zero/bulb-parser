@@ -2,7 +2,9 @@ use crate::entities::Entities;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
-#[derive(Debug, PartialEq)]
+pub type Expr = Vec<Op>;
+
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Op {
     Var(usize),
     /// `0`: Integer value.
@@ -70,7 +72,7 @@ pub enum Token {
 
 type R<T> = Result<T, &'static str>;
 
-pub fn parse<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> R<Vec<Op>> {
+pub fn parse<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> R<Expr> {
     let tokens = tokenize(input, vars, row)?;
     let (root_node, consumed) = parse_expr(&tokens, 0)?;
     if tokens.len() != consumed {
@@ -80,13 +82,13 @@ pub fn parse<'a>(input: &'a str, vars: &mut Entities<'a, ()>, row: usize) -> R<V
 }
 
 /// Converts AST into a flat list of opcodes in postfix (aka reverse Polish) notation.
-pub fn flatten(node: Node) -> Vec<Op> {
-    let mut result = Vec::new();
+pub fn flatten(node: Node) -> Expr {
+    let mut result = Expr::new();
     flatten_into(node, &mut result);
     result
 }
 
-pub fn flatten_into(node: Node, result: &mut Vec<Op>) {
+pub fn flatten_into(node: Node, result: &mut Expr) {
     match node {
         Node::Var(var) => result.push(Op::Var(var)),
         Node::Val(x) => result.push(Op::Val(x)),

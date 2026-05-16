@@ -26,6 +26,7 @@ pub enum ErrKind {
     NotEnoughArgs,
     TooManyArgs,
     NoJump,
+    BadExpr,
 
     DuplicateRoom,
     DuplicateTile,
@@ -70,6 +71,7 @@ impl ErrKind {
             ErrKind::NotEnoughArgs => "not enough arguments",
             ErrKind::TooManyArgs => "too many arguments",
             ErrKind::NoJump => "JUMP or BREAK not found at the expected position",
+            ErrKind::BadExpr => "invalid expression",
 
             ErrKind::DuplicateRoom => "duplicate room ID",
             ErrKind::DuplicateTile => "duplicate tile ID",
