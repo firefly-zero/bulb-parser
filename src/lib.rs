@@ -10,6 +10,8 @@ mod parser;
 #[cfg(test)]
 mod parser_test;
 mod state;
+#[cfg(test)]
+mod state_test;
 mod types;
 
 pub use error::*;

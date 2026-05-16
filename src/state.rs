@@ -96,7 +96,7 @@ impl State {
         }
     }
 
-    fn eval_expr(&self, ops: &[Op]) -> Option<i32> {
+    pub(crate) fn eval_expr(&self, ops: &[Op]) -> Option<i32> {
         let mut stack = Vec::new();
         for op in ops {
             let val = match *op {
@@ -106,33 +106,33 @@ impl State {
                 },
                 Op::Val(val) => val,
                 Op::Add => {
-                    let lhs = stack.pop()?;
                     let rhs = stack.pop()?;
+                    let lhs = stack.pop()?;
                     lhs + rhs
                 }
                 Op::Sub => {
-                    let lhs = stack.pop()?;
                     let rhs = stack.pop()?;
+                    let lhs = stack.pop()?;
                     lhs - rhs
                 }
                 Op::Div => {
-                    let lhs = stack.pop()?;
                     let rhs = stack.pop()?;
+                    let lhs = stack.pop()?;
                     lhs / rhs
                 }
                 Op::Mod => {
-                    let lhs = stack.pop()?;
                     let rhs = stack.pop()?;
+                    let lhs = stack.pop()?;
                     lhs % rhs
                 }
                 Op::Mul => {
-                    let lhs = stack.pop()?;
                     let rhs = stack.pop()?;
+                    let lhs = stack.pop()?;
                     lhs * rhs
                 }
                 op @ (Op::Lt | Op::Lte | Op::Gt | Op::Gte | Op::Eq | Op::Ne) => {
-                    let lhs = stack.pop()?;
                     let rhs = stack.pop()?;
+                    let lhs = stack.pop()?;
                     let val = match op {
                         Op::Lt => lhs < rhs,
                         Op::Lte => lhs <= rhs,
