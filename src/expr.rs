@@ -168,6 +168,13 @@ fn parse_term(tokens: &[Token], pos: usize) -> R<(Node, usize)> {
     match *c {
         Token::Val(n) => Ok((Node::Val(n), pos + 1)),
         Token::Var(name) => Ok((Node::Var(name), pos + 1)),
+        Token::Op(BinOp::Sub) => {
+            if let Some(Token::Val(n)) = tokens.get(pos + 1) {
+                Ok((Node::Val(-n), pos + 2))
+            } else {
+                Err("unary minus must be followed by an integer")
+            }
+        }
         Token::LPar => {
             let (node, next_pos) = parse_mul(tokens, pos + 1)?;
             if let Some(Token::RPar) = tokens.get(next_pos) {

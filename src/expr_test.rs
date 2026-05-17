@@ -11,6 +11,7 @@ fn test_tokenize() {
     assert_eq!(t("1"), vec![Val(1)]);
     assert_eq!(t("13"), vec![Val(13)]);
     assert_eq!(t("6247"), vec![Val(6247)]);
+    assert_eq!(t("-1"), vec![Op(Sub), Val(1)]);
 
     assert_eq!(t("3+4"), vec![Val(3), Op(Add), Val(4)]);
     assert_eq!(t("13+14"), vec![Val(13), Op(Add), Val(14)]);
@@ -54,6 +55,9 @@ fn test_parse() {
     }
     use Op::*;
     assert_eq!(p("1"), vec![Val(1)]);
+    assert_eq!(p("-1"), vec![Val(-1)]);
+    assert_eq!(p("-23"), vec![Val(-23)]);
+    assert_eq!(p("3+-2"), vec![Val(3), Val(-2), Add]);
     assert_eq!(p("1+2"), vec![Val(1), Val(2), Add]);
     assert_eq!(p("13+14"), vec![Val(13), Val(14), Add]);
     assert_eq!(p("13-14"), vec![Val(13), Val(14), Sub]);
