@@ -1,8 +1,8 @@
 [package]
 name = "bulb-parser"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
-rust-version = "1.91.0"
+rust-version = "1.95.0"
 authors = ["Firefly Zero team"]
 description = "Parser and interpreter for Bulb Script"
 repository = "https://github.com/firefly-zero/bulb-parser"
